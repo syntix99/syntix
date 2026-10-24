@@ -47,3 +47,10 @@ This package replaces the previous Supabase browser integration with Firebase Au
 - **Account:** password reset ("Забыли пароль?"), specific error messages, signed-in users are redirected to their profile.
 - **Rules:** `firestore.rules` validates fields and lengths for posts, comments, profiles and favorites. Republish after upload.
 - Favicon added to all pages; Open Graph tags on the home page.
+
+## v3
+- **Ratings:** 1–5 stars on each tool page (`tool-rating.js`, collection `tool_ratings`, one rating per user, click the same star to remove). Average and count are visible to everyone. Needs republished `firestore.rules`.
+- **Compare drawer:** ⚖ button on every catalog card, pick 2–3 tools and open a side-by-side table.
+- **Search:** multi-word matching ("code chat"), `Esc` clears the search field.
+- **Shared UI (`ui.js`):** toast notifications, "skip to content" link, Share button on tool pages.
+- **Accessibility:** visible focus rings, `aria-live` result counter, reduced-motion support.

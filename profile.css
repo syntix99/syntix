@@ -36,3 +36,34 @@
 a.tag:hover{color:#cbbdff;border-color:#9279ff66}
 .resetrow{text-align:center;margin:14px 0 0}
 @media(max-width:560px){.profile-card{padding:20px}.profile-avatar.big{width:76px;height:76px;font-size:30px}}
+
+/* ---- v3: compare drawer, ratings, toasts, a11y ---- */
+.cardbtns{display:flex;gap:6px}
+.cmpbtn{width:30px;height:30px;padding:0;font-size:15px;color:#9da2b8}
+.cmpbtn.on{color:#83efdc;border-color:#65e5d155;background:#65e5d111}
+.cmpbar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:50;display:none;align-items:center;gap:10px;padding:10px 12px;border:1px solid #a28aff44;border-radius:14px;background:#121625f2;backdrop-filter:blur(10px);box-shadow:0 14px 40px #0006;font-size:12px;color:#cfd2e6}
+.cmpbar button:disabled{opacity:.45;cursor:not-allowed}
+.cmpdlg{width:min(980px,calc(100% - 24px));max-height:88vh;padding:0;border:1px solid var(--line);border-radius:18px;background:#0e111c;color:var(--text)}
+.cmpdlg::backdrop{background:#05060bcc}
+.cmpbox{padding:18px}
+.cmphead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.cmphead h3{margin:0;font:600 20px var(--display)}
+.cmptable{min-width:560px}
+.cmptable tbody th{padding:13px 16px;border-top:1px solid #ffffff0d;color:#b9bfd4;font-size:10px;text-align:left;background:transparent;vertical-align:top;white-space:nowrap}
+.cmptable td a{color:#c0b2ff;font-weight:700}
+.rating-box{padding:0 0 14px}
+.rating-row{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-top:12px}
+.rating-avg b{font:600 40px/1 var(--display);letter-spacing:-1px}
+.rating-avg span{display:block;font-size:11px;color:var(--muted);margin-top:4px}
+.stars{display:flex;gap:6px}
+.stars button{width:40px;height:40px;padding:0;font-size:21px;color:#5d6280;background:#0f121d}
+.stars button.on{color:#ffd29d;border-color:#ffb15b55;background:#ffb15b12}
+.rating-box .message{margin:12px 0 0}
+.toasts{position:fixed;right:16px;bottom:84px;z-index:60;display:grid;gap:8px}
+.toast{padding:10px 14px;border:1px solid #a28aff44;border-radius:11px;background:#151929;color:var(--text);font-size:12px;box-shadow:0 10px 30px #0006;transition:.3s}
+.toast.out{opacity:0;transform:translateY(6px)}
+.skip{position:absolute;left:12px;top:-60px;z-index:100;padding:9px 14px;border-radius:10px;background:#7155ef;color:#fff;font-size:12px;font-weight:700}
+.skip:focus{top:12px}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+@media(max-width:560px){.cmpbar{width:calc(100% - 24px);justify-content:space-between}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}

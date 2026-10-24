@@ -76,5 +76,20 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time;
       allow update, delete: if isOwner(resource.data.uid);
     }
+
+    // ---------- Tool ratings (one per user per tool: doc id = <toolSlug>_<uid>) ----------
+    match /tool_ratings/{rid} {
+      allow read: if true;
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(['toolSlug', 'uid', 'value', 'updatedAt'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.toolSlug, 1, 80)
+        && rid == request.resource.data.toolSlug + '_' + request.auth.uid
+        && request.resource.data.value is int
+        && request.resource.data.value >= 1
+        && request.resource.data.value <= 5
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
   }
 }
