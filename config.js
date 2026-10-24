@@ -13,3 +13,6 @@ const firebaseConfig = {
 if (typeof window !== "undefined") {
   window.firebaseConfig = firebaseConfig;
 }
+
+// Scripts read window.SYNTIX_CONFIG.firebase
+window.SYNTIX_CONFIG = { firebase: firebaseConfig };
