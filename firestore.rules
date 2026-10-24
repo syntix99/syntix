@@ -48,7 +48,7 @@ service cloud.firestore {
         && str(request.resource.data.title, 0, 120)
         && str(request.resource.data.body, 1, 5000)
         && str(request.resource.data.toolName, 0, 80)
-        && str(request.resource.data.authorName, 1, 60)
+        && str(request.resource.data.authorName, 1, 100)
         && request.resource.data.createdAt == request.time;
       allow update, delete: if isOwner(resource.data.uid);
     }
@@ -60,7 +60,7 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid
         && str(request.resource.data.postId, 1, 100)
         && str(request.resource.data.body, 1, 3000)
-        && str(request.resource.data.authorName, 1, 60)
+        && str(request.resource.data.authorName, 1, 100)
         && request.resource.data.createdAt == request.time;
       allow update, delete: if isOwner(resource.data.uid);
     }
@@ -72,7 +72,7 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid
         && str(request.resource.data.toolName, 1, 80)
         && str(request.resource.data.body, 1, 3000)
-        && str(request.resource.data.authorName, 1, 60)
+        && str(request.resource.data.authorName, 1, 100)
         && request.resource.data.createdAt == request.time;
       allow update, delete: if isOwner(resource.data.uid);
     }

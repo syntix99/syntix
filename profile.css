@@ -1,22 +1,38 @@
-/* Syntix profiles — extends styles.css, does not override it */
-.profile-page{display:grid;gap:20px;padding-top:32px;padding-bottom:56px}
-.profile-card{display:flex;flex-wrap:wrap;align-items:center;gap:24px}
+/* Syntix profiles & shared extras — extends styles.css, uses its tokens */
+.profile-page{display:grid;gap:18px;padding-top:30px;padding-bottom:64px}
+.profile-card{display:flex;flex-wrap:wrap;align-items:center;gap:22px;padding:26px;border-radius:20px;background:radial-gradient(ellipse at 8% 10%,#9375ff16,transparent 44%),linear-gradient(145deg,#141827ed,#0e111cee)}
 .profile-info{flex:1 1 260px;min-width:0}
-.profile-info h1{margin:6px 0 10px;overflow-wrap:anywhere}
+.profile-info h1{font:600 clamp(28px,4vw,40px)/1.15 var(--display);letter-spacing:-1.2px;margin:6px 0 4px;overflow-wrap:anywhere}
 .profile-bio{overflow-wrap:anywhere}
-.profile-actions{display:flex;flex-wrap:wrap;gap:10px}
-.profile-avatar{display:inline-flex;align-items:center;justify-content:center;flex:none;width:44px;height:44px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#7c5cff,#ff7ab8);color:#fff;font-weight:700}
-.profile-avatar.big{width:96px;height:96px;font-size:2.2rem}
-.profile-edit{display:grid;gap:16px}
+.profile-info .muted{margin:8px 0 0;font-size:11px}
+.profile-actions{display:flex;flex-wrap:wrap;gap:8px}
+.profile-avatar{display:inline-grid;place-items:center;flex:none;width:44px;height:44px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#b6a0ff,#7155f3);color:#fff;font:700 16px var(--display)}
+.profile-avatar.big{width:96px;height:96px;font-size:38px;border:2px solid #a28aff44}
+.profile-edit{display:grid;gap:14px}
+.profile-edit .field{margin:0}
+.profile-edit input:not([type=checkbox]):not([type=file]),.profile-edit textarea,.profile-edit select{width:100%;background:#0b0e18;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:11px 12px;outline:0;font-size:12px;font-family:var(--font)}
+.profile-edit input:not([type=checkbox]):not([type=file]){height:44px;padding:0 12px}
+.profile-edit textarea{resize:vertical}
+.profile-edit input:focus,.profile-edit textarea:focus,.profile-edit select:focus{border-color:#9d80ff99}
 .profile-avatar-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .profile-avatar-row .btn{margin:2px 6px 2px 0}
-.profile-check{display:flex;align-items:center;gap:10px;cursor:pointer}
-.profile-check input{width:18px;height:18px}
+.profile-check{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:12px;color:#b6bbce}
+.profile-check input{width:17px;height:17px;accent-color:#9d80ff}
 .ptabs{display:flex;gap:8px;flex-wrap:wrap}
-.ptabs button{font:inherit;color:inherit;cursor:pointer;padding:10px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)}
-.ptabs button.active{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3)}
-.fav-card{display:flex;gap:16px;align-items:flex-start}
+.ptabs button{color:#9da2b8;background:#0f121d;font-weight:500}
+.ptabs button.active{color:#cbbdff;background:#8b72fa19;border-color:#9279ff66}
+.fav-card{display:flex;gap:15px;align-items:flex-start}
 .fav-text{flex:1;min-width:0}
-.author-link{color:inherit;text-decoration:none;font-weight:600}
-.author-link:hover{text-decoration:underline}
-.btn.active{border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.14)}
+.fav-text h3{margin:0 0 4px!important}
+.fav-card .feed-bottom{align-items:center}
+.btn.active{color:#ffb7d6;border-color:#ff9ecb55;background:#ff9ecb12}
+.author-link{color:inherit;font-weight:700}
+.author-link:hover{color:#cbbdff;text-decoration:underline}
+.linkbtn{background:none;border:0;padding:0;margin-left:8px;color:#c1b1ff;font-size:10px;font-weight:600;cursor:pointer}
+.linkbtn:hover{text-decoration:underline;border:0}
+.related{margin-top:34px}
+.related .grid{margin-top:12px}
+.related .card{min-height:150px}
+a.tag:hover{color:#cbbdff;border-color:#9279ff66}
+.resetrow{text-align:center;margin:14px 0 0}
+@media(max-width:560px){.profile-card{padding:20px}.profile-avatar.big{width:76px;height:76px;font-size:30px}}

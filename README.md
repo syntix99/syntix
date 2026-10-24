@@ -38,3 +38,12 @@ This package replaces the previous Supabase browser integration with Firebase Au
 - Activity tab lists the user's posts and comments (simple `where uid ==` queries, no composite index needed).
 - `nav-auth.js` turns the "Войти" button into "Профиль" when signed in.
 - **Republish `firestore.rules`** (Firestore → Rules → Publish) after uploading these files.
+
+## Site improvements (v2)
+- **Catalog:** hearts now sync with Firestore when signed in (guests stay on localStorage; first login merges both). New "♥ Избранное" filter, `/` focuses search, `?cat=code&q=chat` deep links, category tag on tool pages links to the filtered catalog.
+- **Comparison table** (`#comparison`) restored on the home page and added to the nav.
+- **Tool pages:** "Similar tools" block (same category).
+- **Community:** authors can delete their own posts/comments; comment loading uses one `in` query per 10 posts instead of one per post; tool discussions sorted client-side. **No composite indexes are required anymore.**
+- **Account:** password reset ("Забыли пароль?"), specific error messages, signed-in users are redirected to their profile.
+- **Rules:** `firestore.rules` validates fields and lengths for posts, comments, profiles and favorites. Republish after upload.
+- Favicon added to all pages; Open Graph tags on the home page.
