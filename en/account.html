@@ -1,1 +1,132 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Account — Syntix.ai</title><link rel="stylesheet" href="../styles.css"></head><body><div class="wrap"><header class="nav"><a class="logo" href="./">syntix<span>.ai</span></a><nav class="links"><a href="./tools.html">AI Tools</a><a href="./compare.html">Compare</a><a href="../ru/account.html">RU</a></nav></header><main class="section"><section class="card auth-card"><h1>Syntix.ai account</h1><p class="muted">Create a demo account or sign in.</p><form id="auth-form" class="auth-form"><div class="auth-modes"><label><input type="radio" name="mode" value="signup" checked> Sign up</label><label><input type="radio" name="mode" value="login"> Sign in</label></div><label>Email<input id="email" type="email" required autocomplete="email" placeholder="you@example.com"></label><label>Password (at least 8 characters)<input id="password" type="password" required minlength="8" autocomplete="current-password" placeholder="••••••••"></label><button class="btn" type="submit">Continue</button></form><p id="auth-message" aria-live="polite"></p><button class="btn" id="logout" type="button">Sign out</button><p class="note">Important: this is a demo only. The account is stored in this browser's local storage, the password is not protected like a real service, and it will not sync across devices. Do not enter a real or reused password. Real accounts require an authentication backend.</p></section></main><footer class="footer">© 2026 Syntix.ai</footer></div><script src="../app.js"></script><script>setupAuth('en');</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <title>Account — Syntix.ai</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="nav">
+      <a class="logo" href="./">syntix<span>.ai</span></a>
+      <nav class="links" aria-label="Main navigation">
+        <a href="./tools.html">AI directory</a>
+        <a href="./compare.html">Compare</a>
+        <a href="../ru/account.html">Русский</a>
+      </nav>
+    </header>
+    <main class="section">
+      <section class="card auth-card">
+        <h1>Syntix.ai account</h1>
+        <p class="muted">Create an account or sign in to use Syntix across devices.</p>
+        <div id="signed-in-panel" hidden>
+          <p>Signed in as <strong id="user-email"></strong></p>
+          <button class="btn" id="logout" type="button">Sign out</button>
+        </div>
+        <form id="auth-form" class="auth-form">
+          <div class="auth-modes">
+            <label><input type="radio" name="mode" value="signup" checked> Sign up</label>
+            <label><input type="radio" name="mode" value="login"> Sign in</label>
+          </div>
+          <label>Email
+            <input id="email" type="email" required autocomplete="email" placeholder="you@example.com">
+          </label>
+          <label>Password (at least 8 characters)
+            <input id="password" type="password" required minlength="8" autocomplete="new-password" placeholder="At least 8 characters">
+          </label>
+          <button class="btn" id="submit-auth" type="submit">Create account</button>
+        </form>
+        <p id="auth-message" role="status" aria-live="polite"></p>
+        <p class="note">You may need to confirm your email after signing up. Use a unique password. Syntix.ai support will never ask you to send your password.</p>
+      </section>
+    </main>
+    <footer class="footer">© 2026 Syntix.ai</footer>
+  </div>
+  <script type="module">
+    import { supabase } from '../supabase-client.js';
+
+    const form = document.querySelector('#auth-form');
+    const emailInput = document.querySelector('#email');
+    const passwordInput = document.querySelector('#password');
+    const message = document.querySelector('#auth-message');
+    const submitButton = document.querySelector('#submit-auth');
+    const signedInPanel = document.querySelector('#signed-in-panel');
+    const userEmail = document.querySelector('#user-email');
+    const logoutButton = document.querySelector('#logout');
+    const modeInputs = [...document.querySelectorAll('input[name="mode"]')];
+
+    const selectedMode = () => modeInputs.find((input) => input.checked)?.value || 'signup';
+    const setMessage = (text, isError = false) => {
+      message.textContent = text;
+      message.style.color = isError ? '#fca5a5' : '#86efac';
+    };
+    const refreshMode = () => {
+      const login = selectedMode() === 'login';
+      submitButton.textContent = login ? 'Sign in' : 'Create account';
+      passwordInput.autocomplete = login ? 'current-password' : 'new-password';
+      message.textContent = '';
+    };
+    modeInputs.forEach((input) => input.addEventListener('change', refreshMode));
+
+    async function refreshSession() {
+      const { data, error } = await supabase.auth.getUser();
+      if (error && error.name !== 'AuthSessionMissingError') console.error(error);
+      const user = data?.user;
+      if (user) {
+        userEmail.textContent = user.email || 'User';
+        signedInPanel.hidden = false;
+        form.hidden = true;
+      } else {
+        signedInPanel.hidden = true;
+        form.hidden = false;
+      }
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      submitButton.disabled = true;
+      setMessage('Please wait…');
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      try {
+        if (selectedMode() === 'signup') {
+          const emailRedirectTo = new URL('./account.html', window.location.href).href;
+          const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo } });
+          if (error) throw error;
+          if (data.session) {
+            setMessage('Account created and signed in.');
+            await refreshSession();
+          } else {
+            setMessage('Account created. Check your inbox and follow the confirmation link.');
+          }
+        } else {
+          const { error } = await supabase.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          setMessage('You are signed in.');
+          await refreshSession();
+        }
+      } catch (error) {
+        setMessage(error?.message || 'Could not complete the request. Please try again.', true);
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+
+    logoutButton.addEventListener('click', async () => {
+      logoutButton.disabled = true;
+      const { error } = await supabase.auth.signOut();
+      logoutButton.disabled = false;
+      if (error) setMessage(error.message, true);
+      else {
+        setMessage('You have signed out.');
+        await refreshSession();
+      }
+    });
+
+    supabase.auth.onAuthStateChange(() => { refreshSession(); });
+    await refreshSession();
+  </script>
+</body>
+</html>
