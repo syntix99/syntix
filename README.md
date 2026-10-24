@@ -1,34 +1,25 @@
-# Syntix bilingual refresh
+# Syntix — Firebase migration
 
-A responsive static website for GitHub Pages.
+This package replaces the previous Supabase browser integration with Firebase Authentication (email/password) and Cloud Firestore. The AI directory and detail pages are retained.
 
-- `index.html`: home page and tool directory
-- `styles.css`: responsive dark interface
-- `app.js`: bilingual RU/EN, live search, category filters, sorting, favorites
-- `account.html` + `account.js`: email sign-in and sign-up with Supabase JS
-- `config.js`: Supabase project URL and public publishable key
-- `.nojekyll`: GitHub Pages marker
+## Setup
+1. Create a project at https://console.firebase.google.com/ (free Spark plan).
+2. Add a **Web app** in Project settings and copy its Firebase web config into `config.js`. Replace every `PASTE_...` placeholder. Firebase web config is public client configuration; never paste a service account private key or Admin SDK credentials here.
+3. In **Authentication → Sign-in method**, enable **Email/Password**.
+4. In **Authentication → Settings → Authorized domains**, add your GitHub Pages hostname, e.g. `syntix99.github.io`.
+5. Create **Firestore Database** in test/production mode, then open **Firestore → Rules** and paste `firestore.rules`, then Publish. Do not use unrestricted test rules.
+6. Upload the contents of this folder to the root of the existing GitHub repository, replacing files with the same names. Keep `tools.json`, `app.js`, `tool.js`, `styles.css`, and `.nojekyll`. Commit changes and wait for GitHub Pages to deploy.
 
-## Publish
-1. Download and unzip this archive.
-2. Open https://github.com/syntix99/syntix
-3. Make a backup/branch before replacing existing files.
-4. Upload the files to the repository root (same level as `index.html`) and commit.
-5. Wait a few minutes for GitHub Pages to deploy.
+## Features
+- Public read access for community posts and comments.
+- Only signed-in users can create posts/comments.
+- Users can edit/delete only their own documents at the Firestore rules layer.
+- Global community feed, comments in feed, and discussions on AI tool detail pages.
+- RU/EN language toggle retained.
 
-This is a clean refresh package, not a patch against unseen current files. Keep a copy of the current repository before replacing anything. The browser config contains only the publishable key, never a Supabase secret/service_role key. Sign-in will remain unavailable until the Supabase API connection issue is fixed. Free plan labels are informational and should be checked against each provider's current terms.
-
-## Community features (new)
-- `community.html` is the public community feed. Everyone can read posts and comments; posting requires a signed-in Supabase account.
-- Each AI tool detail page has its own comments section (`tool_comments`).
-- `community.js` and `tool-community.js` power posting and discussions.
-- `supabase-community.sql` creates the required tables, indexes, and Row Level Security policies.
-
-### One-time Supabase setup
-1. Open Supabase Dashboard for this project.
-2. Go to **SQL Editor** → **New query**.
-3. Paste the full contents of `supabase-community.sql` and click **Run**.
-4. In **Authentication → URL Configuration**, add your GitHub Pages URL to the allowed redirect URLs if needed.
-5. Commit all files from this archive to the repository root and wait for GitHub Pages to publish.
-
-The public publishable key in `config.js` is intended for browser use. Never add a `service_role` or secret key to this repository. Supabase API connectivity must be working for shared posts/comments to load; static pages alone cannot sync data between users.
+## Notes
+- This migration does not automatically copy old Supabase users or posts. Old Supabase data remains in Supabase unless you export/migrate it separately.
+- Firestore may require a composite index for a query. If Firebase shows a `create index` link in the console, open it and create the suggested index.
+- Never add Firebase Admin SDK/service account secrets to GitHub Pages.
+- Firebase free plan has usage quotas. Review current limits in Firebase documentation.
+- Verify registration, sign-in, posting, and comments on the deployed site after configuring the Firebase project. The package cannot be connected to your Firebase project until you provide your own web app config in `config.js`.
