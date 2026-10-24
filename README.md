@@ -1,11 +1,11 @@
-# Syntix starter site
+# Syntix.ai starter site
 
-Bilingual static website in Russian and English. No build tools or paid APIs required.
+Bilingual static AI tools directory in Russian and English.
 
 ## Publish on GitHub Pages
-1. Upload every file and folder in this ZIP to the root of your public repository named `syntix`.
-2. Go to repository Settings → Pages.
-3. Under Build and deployment, select Deploy from a branch, branch `main`, folder `/ (root)`, and save.
-4. Wait for deployment. GitHub will show the public URL.
+Upload all files and folders to the root of the public `syntix` repository, then enable Pages from `main` / root.
 
-English: `/en/`; Russian: `/ru/`. This is a starter version; verify all tool details and regional availability before publishing. A custom `.ru` domain costs money to register, so it is not included in this €0 version.
+## Important account limitation
+The account page is a browser-only demo using localStorage. It is NOT secure authentication and accounts do not transfer to other devices. Do not use real/reused passwords. For production account creation, connect an auth backend such as Supabase or Firebase and configure its public client settings.
+
+AI tool icons load from each service's domain favicon endpoint and therefore require an internet connection. Check pricing, logos and regional availability before publishing.
