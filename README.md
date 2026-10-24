@@ -1,19 +1,17 @@
 # Syntix bilingual refresh
 
-A responsive static website for GitHub Pages.
+Responsive static website for GitHub Pages, Russian and English.
 
-- `index.html`: home page and tool directory
-- `styles.css`: responsive dark interface
-- `app.js`: bilingual RU/EN, live search, category filters, sorting, favorites
-- `account.html` + `account.js`: email sign-in and sign-up with Supabase JS
-- `config.js`: Supabase project URL and public publishable key
+- `index.html`: home, catalog, comparison table
+- `styles.css`: responsive design and mobile-friendly horizontally scrollable comparison table
+- `app.js`: 27 AI services, search, category filters, sorting, favorites, bilingual comparison table
+- `account.html` + `account.js`: Supabase email sign-in/sign-up
+- `config.js`: public Supabase URL and publishable key
 - `.nojekyll`: GitHub Pages marker
 
 ## Publish
-1. Download and unzip this archive.
-2. Open https://github.com/syntix99/syntix
-3. Make a backup/branch before replacing existing files.
-4. Upload the files to the repository root (same level as `index.html`) and commit.
-5. Wait a few minutes for GitHub Pages to deploy.
+1. Keep a backup of the current repository.
+2. Upload these files to the repository root (`syntix99/syntix`) and commit.
+3. Wait for GitHub Pages to deploy.
 
-This is a clean refresh package, not a patch against unseen current files. Keep a copy of the current repository before replacing anything. The browser config contains only the publishable key, never a Supabase secret/service_role key. Sign-in will remain unavailable until the Supabase API connection issue is fixed. Free plan labels are informational and should be checked against each provider's current terms.
+Free-plan descriptions are indicative summaries, not guarantees. Providers change quotas, features and eligibility; visitors should check the linked provider pages. Never expose a Supabase secret/service_role key in frontend files.
