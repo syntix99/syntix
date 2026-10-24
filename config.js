@@ -1,11 +1,12 @@
-/* Firebase web config. These values identify your project; never put Admin SDK private keys here. */
+/* Firebase Web App configuration for Syntix. These client config values are not Admin SDK secrets. */
 window.SYNTIX_CONFIG = {
   firebase: {
-    apiKey: "PASTE_FIREBASE_WEB_API_KEY",
-    authDomain: "PASTE_PROJECT_ID.firebaseapp.com",
-    projectId: "PASTE_PROJECT_ID",
-    storageBucket: "PASTE_PROJECT_ID.firebasestorage.app",
-    messagingSenderId: "PASTE_SENDER_ID",
-    appId: "PASTE_APP_ID"
+    apiKey: "AIzaSyAJpB6W2rEmK-_9UrMziTXVdN9tn04AC-o",
+    authDomain: "syntix-b5c57.firebaseapp.com",
+    projectId: "syntix-b5c57",
+    storageBucket: "syntix-b5c57.firebasestorage.app",
+    messagingSenderId: "316671040037",
+    appId: "1:316671040037:web:cd3ff92fb706964c3dbdcc",
+    measurementId: "G-CR7DTE37TG"
   }
 };

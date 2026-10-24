@@ -2,31 +2,34 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
-    function validText(value, max) { return value is string && value.size() > 0 && value.size() <= max; }
+    function validBody() {
+      return request.resource.data.body is string
+        && request.resource.data.body.size() > 0
+        && request.resource.data.body.size() <= 3000;
+    }
     match /community_posts/{postId} {
       allow read: if true;
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
-        && validText(request.resource.data.body, 5000)
-        && request.resource.data.title is string
-        && request.resource.data.toolName is string;
-      allow update, delete: if signedIn() && resource.data.uid == request.auth.uid;
+        && validBody();
+      allow update, delete: if signedIn()
+        && resource.data.uid == request.auth.uid;
     }
     match /community_comments/{commentId} {
       allow read: if true;
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
-        && validText(request.resource.data.body, 3000)
-        && request.resource.data.postId is string;
-      allow update, delete: if signedIn() && resource.data.uid == request.auth.uid;
+        && validBody();
+      allow update, delete: if signedIn()
+        && resource.data.uid == request.auth.uid;
     }
     match /tool_comments/{commentId} {
       allow read: if true;
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
-        && validText(request.resource.data.body, 3000)
-        && request.resource.data.toolName is string;
-      allow update, delete: if signedIn() && resource.data.uid == request.auth.uid;
+        && validBody();
+      allow update, delete: if signedIn()
+        && resource.data.uid == request.auth.uid;
     }
   }
 }

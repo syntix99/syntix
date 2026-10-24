@@ -23,3 +23,8 @@ This package replaces the previous Supabase browser integration with Firebase Au
 - Never add Firebase Admin SDK/service account secrets to GitHub Pages.
 - Firebase free plan has usage quotas. Review current limits in Firebase documentation.
 - Verify registration, sign-in, posting, and comments on the deployed site after configuring the Firebase project. The package cannot be connected to your Firebase project until you provide your own web app config in `config.js`.
+
+
+## Firebase configuration
+
+`config.js` is populated with the Firebase Web App configuration for project `syntix-b5c57`. Firestore rules are in `firestore.rules`; publish them in Firebase Console → Firestore Database → Rules.
