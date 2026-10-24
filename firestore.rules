@@ -1,35 +1,80 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
     function signedIn() { return request.auth != null; }
-    function validBody() {
-      return request.resource.data.body is string
-        && request.resource.data.body.size() > 0
-        && request.resource.data.body.size() <= 3000;
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+    function str(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
+
+    // ---------- Public profiles ----------
+    match /profiles/{uid} {
+      function validProfile() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['displayName', 'bio', 'avatar', 'showFavorites', 'lang', 'createdAt', 'updatedAt'])
+          && str(d.displayName, 1, 40)
+          && str(d.bio, 0, 300)
+          && str(d.avatar, 0, 40000)
+          && (d.avatar == '' || d.avatar.matches('^data:image/.*'))
+          && d.showFavorites is bool
+          && d.lang in ['ru', 'en']
+          && d.updatedAt == request.time;
+      }
+
+      allow read: if true;
+      allow create: if isOwner(uid) && validProfile() && request.resource.data.createdAt == request.time;
+      allow update: if isOwner(uid) && validProfile() && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isOwner(uid);
+
+      // Favorites: always visible to the owner, visible to others only if the profile allows it
+      match /favorites/{slug} {
+        allow read: if isOwner(uid)
+          || (exists(/databases/$(database)/documents/profiles/$(uid))
+              && get(/databases/$(database)/documents/profiles/$(uid)).data.showFavorites == true);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['slug', 'toolName', 'createdAt'])
+          && request.resource.data.slug == slug
+          && str(request.resource.data.toolName, 1, 80)
+          && request.resource.data.createdAt == request.time;
+        allow delete: if isOwner(uid);
+      }
     }
-    match /community_posts/{postId} {
+
+    // ---------- Community feed ----------
+    match /community_posts/{id} {
       allow read: if true;
       allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['title', 'body', 'toolName', 'uid', 'authorName', 'createdAt'])
         && request.resource.data.uid == request.auth.uid
-        && validBody();
-      allow update, delete: if signedIn()
-        && resource.data.uid == request.auth.uid;
+        && str(request.resource.data.title, 0, 120)
+        && str(request.resource.data.body, 1, 5000)
+        && str(request.resource.data.toolName, 0, 80)
+        && str(request.resource.data.authorName, 1, 60)
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if isOwner(resource.data.uid);
     }
-    match /community_comments/{commentId} {
+
+    match /community_comments/{id} {
       allow read: if true;
       allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['postId', 'body', 'uid', 'authorName', 'createdAt'])
         && request.resource.data.uid == request.auth.uid
-        && validBody();
-      allow update, delete: if signedIn()
-        && resource.data.uid == request.auth.uid;
+        && str(request.resource.data.postId, 1, 100)
+        && str(request.resource.data.body, 1, 3000)
+        && str(request.resource.data.authorName, 1, 60)
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if isOwner(resource.data.uid);
     }
-    match /tool_comments/{commentId} {
+
+    match /tool_comments/{id} {
       allow read: if true;
       allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['toolName', 'body', 'uid', 'authorName', 'createdAt'])
         && request.resource.data.uid == request.auth.uid
-        && validBody();
-      allow update, delete: if signedIn()
-        && resource.data.uid == request.auth.uid;
+        && str(request.resource.data.toolName, 1, 80)
+        && str(request.resource.data.body, 1, 3000)
+        && str(request.resource.data.authorName, 1, 60)
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if isOwner(resource.data.uid);
     }
   }
 }

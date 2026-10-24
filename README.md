@@ -28,3 +28,13 @@ This package replaces the previous Supabase browser integration with Firebase Au
 ## Firebase configuration
 
 `config.js` is populated with the Firebase Web App configuration for project `syntix-b5c57`. Firestore rules are in `firestore.rules`; publish them in Firebase Console → Firestore Database → Rules.
+
+
+## Profiles (public)
+- `profile.html` + `profile.js` + `profile.css`: public profile at `profile.html?uid=<uid>`; own profile at `profile.html` (needs sign-in).
+- Data: `profiles/{uid}` (displayName, bio, avatar, showFavorites, lang, createdAt, updatedAt) and `profiles/{uid}/favorites/{toolSlug}`.
+- Avatar is resized in the browser to 160×160 JPEG and stored as a data URL inside the profile document (no Firebase Storage needed).
+- Favorites: heart button on `tool.html` (`favorites.js`). Visible to others only when the owner enables it in settings.
+- Activity tab lists the user's posts and comments (simple `where uid ==` queries, no composite index needed).
+- `nav-auth.js` turns the "Войти" button into "Профиль" when signed in.
+- **Republish `firestore.rules`** (Firestore → Rules → Publish) after uploading these files.
