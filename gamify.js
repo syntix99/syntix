@@ -1,97 +1,255 @@
-/* Syntix levels, XP and achievements.
-   Everything is derived from public documents (posts, comments, likes, ratings, channels),
-   so nothing is stored in profiles and users cannot edit their own score. */
-(() => {
-  const XP = { p: 10, c: 3, l: 2, r: 2, ch: 15 };      // post, comment, like received, rating, channel
-  const DAY_CAP = { p: 5, c: 10 };                    // anti-spam: max XP-eligible posts / comments per day
-  const DAY = 86400000;
-  const LEVELS = [
-    [1, '🌱', 'Новичок', 'Newcomer'], [3, '🙂', 'Участник', 'Member'], [5, '🔥', 'Активист', 'Activist'],
-    [8, '🎯', 'Эксперт', 'Expert'], [12, '👑', 'Мастер', 'Master'], [18, '🏆', 'Легенда', 'Legend']
-  ];
-  const levelStart = l => 15 * (l - 1) * (l - 1);
-  const levelOf = xp => 1 + Math.floor(Math.sqrt(Math.max(0, xp) / 15));
-  const ms = v => (v && v.toMillis ? v.toMillis() : 0) || Date.now();
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
 
-  function levelInfo(xp) {
-    const l = levelOf(xp), cur = levelStart(l), next = levelStart(l + 1);
-    let tier = LEVELS[0];
-    for (const x of LEVELS) if (l >= x[0]) tier = x;
-    return { level: l, icon: tier[1], ru: tier[2], en: tier[3], cur, next, pct: Math.min(100, Math.round(((xp - cur) / (next - cur)) * 100)) };
-  }
+    function signedIn() { return request.auth != null; }
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+    function str(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
 
-  const empty = () => ({ p: 0, c: 0, l: 0, r: 0, ch: 0, xp: 0, days: new Set() });
-
-  // events: [type, uid, ms]; returns Map(uid -> stats)
-  function build(events, since = 0) {
-    const out = new Map(), caps = new Map();
-    for (const [type, uid, t] of events) {
-      if (!uid || t < since) continue;
-      let s = out.get(uid); if (!s) { s = empty(); out.set(uid, s); }
-      const day = Math.floor(t / DAY);
-      if (DAY_CAP[type]) {
-        const k = uid + '|' + type + '|' + day, n = (caps.get(k) || 0) + 1;
-        caps.set(k, n);
-        if (n > DAY_CAP[type]) continue;
-      }
-      s[type]++; s.xp += XP[type];
-      if (type === 'p' || type === 'c') s.days.add(day);
+    // Premium status lives in premium/{uid}; clients can read it but never write it.
+    function isPremium(uid) {
+      return exists(/databases/$(database)/documents/premium/$(uid))
+        && get(/databases/$(database)/documents/premium/$(uid)).data.until > request.time;
     }
-    return out;
+
+    match /premium/{uid} {
+      allow read: if true;
+      allow write: if false;   // written only by the site owner (Console) or the Stripe webhook (Admin SDK)
+    }
+
+    // ---------- helpers for channels ----------
+    function channelPostOk(cid) {
+      return cid == '' || (
+        exists(/databases/$(database)/documents/channels/$(cid))
+        && (get(/databases/$(database)/documents/channels/$(cid)).data.mode == 'open'
+            || get(/databases/$(database)/documents/channels/$(cid)).data.ownerUid == request.auth.uid));
+    }
+    function isChannelOwner(cid) {
+      return cid != ''
+        && exists(/databases/$(database)/documents/channels/$(cid))
+        && get(/databases/$(database)/documents/channels/$(cid)).data.ownerUid == request.auth.uid;
+    }
+
+    // ---------- Public profiles ----------
+    match /profiles/{uid} {
+      function validProfile() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['displayName', 'bio', 'avatar', 'showFavorites', 'allowDms', 'accent', 'lang', 'createdAt', 'updatedAt'])
+          && str(d.displayName, 1, 40)
+          && str(d.bio, 0, 300)
+          && str(d.avatar, 0, 40000)
+          && (d.avatar == '' || d.avatar.matches('^data:image/.*'))
+          && d.showFavorites is bool
+          && (!('allowDms' in d) || d.allowDms is bool)
+          && (!('accent' in d) || d.accent == ''
+              || (d.accent in ['#9d80ff', '#ff9ecb', '#65e5d1', '#ffb15b', '#7fb2ff', '#b6f35c'] && isPremium(request.auth.uid)))
+          && d.lang in ['ru', 'en']
+          && d.updatedAt == request.time;
+      }
+
+      allow read: if true;
+      allow create: if isOwner(uid) && validProfile() && request.resource.data.createdAt == request.time;
+      allow update: if isOwner(uid) && validProfile() && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isOwner(uid);
+
+      match /favorites/{slug} {
+        allow read: if isOwner(uid)
+          || (exists(/databases/$(database)/documents/profiles/$(uid))
+              && get(/databases/$(database)/documents/profiles/$(uid)).data.showFavorites == true);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['slug', 'toolName', 'createdAt'])
+          && request.resource.data.slug == slug
+          && str(request.resource.data.toolName, 1, 80)
+          && request.resource.data.createdAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+
+      // People this user follows (private to the user; doc id = followed uid)
+      match /following/{target} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && target != uid
+          && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+          && request.resource.data.uid == target
+          && request.resource.data.createdAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+
+      // Channels this user follows (private to the user)
+      match /joined/{cid} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['cid', 'joinedAt'])
+          && request.resource.data.cid == cid
+          && request.resource.data.joinedAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+    }
+
+    // ---------- Channels ----------
+    match /channels/{cid} {
+      function validChannel() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['name', 'desc', 'icon', 'mode', 'ownerUid', 'ownerName', 'createdAt'])
+          && str(d.name, 3, 30)
+          && str(d.desc, 0, 200)
+          && str(d.icon, 1, 8)
+          && d.mode in ['open', 'owner']
+          && str(d.ownerName, 1, 100);
+      }
+      allow read: if true;
+      allow create: if signedIn() && validChannel()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+      allow update: if signedIn() && resource.data.ownerUid == request.auth.uid && validChannel()
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // ---------- Feed posts (optionally inside a channel) ----------
+    match /community_posts/{id} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['title', 'body', 'toolName', 'channelId', 'uid', 'authorName', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.title, 0, 120)
+        && (str(request.resource.data.body, 1, 5000) || (str(request.resource.data.body, 1, 15000) && isPremium(request.auth.uid)))
+        && str(request.resource.data.toolName, 0, 80)
+        && str(request.resource.data.get('channelId', ''), 0, 40)
+        && channelPostOk(request.resource.data.get('channelId', ''))
+        && str(request.resource.data.authorName, 1, 100)
+        && request.resource.data.createdAt == request.time;
+      // Premium authors can edit the text of their own posts (nothing else may change)
+      allow update: if isOwner(resource.data.uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'body', 'editedAt'])
+        && str(request.resource.data.title, 0, 120)
+        && str(request.resource.data.body, 1, 15000)
+        && request.resource.data.editedAt == request.time
+        && isPremium(request.auth.uid);
+      // the author, or the owner of the channel the post lives in
+      allow delete: if isOwner(resource.data.uid) || isChannelOwner(resource.data.get('channelId', ''));
+    }
+
+    match /community_comments/{id} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['postId', 'body', 'uid', 'authorName', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.postId, 1, 100)
+        && str(request.resource.data.body, 1, 3000)
+        && str(request.resource.data.authorName, 1, 100)
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if isOwner(resource.data.uid);
+    }
+
+    match /tool_comments/{id} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['toolName', 'body', 'uid', 'authorName', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.toolName, 1, 80)
+        && str(request.resource.data.body, 1, 3000)
+        && str(request.resource.data.authorName, 1, 100)
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if isOwner(resource.data.uid);
+    }
+
+    // ---------- Tool ratings (doc id = <toolSlug>_<uid>) ----------
+    match /tool_ratings/{rid} {
+      allow read: if true;
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(['toolSlug', 'uid', 'value', 'updatedAt'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.toolSlug, 1, 80)
+        && rid == request.resource.data.toolSlug + '_' + request.auth.uid
+        && request.resource.data.value is int
+        && request.resource.data.value >= 1
+        && request.resource.data.value <= 5
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // ---------- Post likes (doc id = <postId>_<uid>) ----------
+    match /post_likes/{lid} {
+      allow read: if true;
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(['postId', 'uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.postId, 1, 100)
+        && lid == request.resource.data.postId + '_' + request.auth.uid
+        && request.resource.data.createdAt == request.time;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // ---------- Reports: write-only, review in the Firebase Console ----------
+    match /reports/{rid} {
+      allow read: if false;
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(['col', 'docId', 'uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.col in ['community_posts', 'community_comments', 'tool_comments']
+        && str(request.resource.data.docId, 1, 100)
+        && rid == request.resource.data.col + '_' + request.resource.data.docId + '_' + request.auth.uid
+        && request.resource.data.createdAt == request.time;
+      allow delete: if false;
+    }
+
+    // ---------- Tool suggestions ----------
+    match /tool_suggestions/{sid} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['name', 'url', 'category', 'note', 'uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.name, 2, 80)
+        && str(request.resource.data.url, 8, 200)
+        && request.resource.data.url.matches('^https?://.*')
+        && request.resource.data.category in ['text', 'image', 'video', 'code', 'work']
+        && str(request.resource.data.note, 0, 500)
+        && request.resource.data.createdAt == request.time;
+    }
+
+    // ---------- Direct messages: thread id = <smallerUid>_<largerUid> ----------
+    match /dm_threads/{tid} {
+      function validThread() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['participants', 'lastMessage', 'lastAt', 'lastSender'])
+          && d.participants is list
+          && d.participants.size() == 2
+          && request.auth.uid in d.participants
+          && str(d.lastMessage, 0, 200)
+          && d.lastSender == request.auth.uid
+          && d.lastAt == request.time;
+      }
+      // the recipient can switch DMs off in their profile (applies to new conversations)
+      function dmAllowed(p) {
+        let other = request.auth.uid == p[0] ? p[1] : p[0];
+        return !exists(/databases/$(database)/documents/profiles/$(other))
+          || get(/databases/$(database)/documents/profiles/$(other)).data.get('allowDms', true) == true;
+      }
+
+      allow read: if signedIn() && request.auth.uid in resource.data.participants;
+      allow create: if signedIn() && validThread()
+        && request.resource.data.participants[0] < request.resource.data.participants[1]
+        && tid == request.resource.data.participants[0] + '_' + request.resource.data.participants[1]
+        && dmAllowed(request.resource.data.participants);
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.participants
+        && validThread()
+        && request.resource.data.participants == resource.data.participants;
+      allow delete: if false;
+
+      match /messages/{mid} {
+        allow read: if signedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/dm_threads/$(tid)).data.participants;
+        allow create: if signedIn()
+          && request.auth.uid in getAfter(/databases/$(database)/documents/dm_threads/$(tid)).data.participants
+          && request.resource.data.keys().hasOnly(['sender', 'text', 'createdAt'])
+          && request.resource.data.sender == request.auth.uid
+          && str(request.resource.data.text, 1, 2000)
+          && request.resource.data.createdAt == request.time;
+        allow update, delete: if false;
+      }
+    }
   }
-
-  function streakOf(days) {
-    const a = [...days].sort((x, y) => x - y);
-    let best = 0, run = 0, prev = null;
-    for (const d of a) { run = prev !== null && d === prev + 1 ? run + 1 : 1; best = Math.max(best, run); prev = d; }
-    return best;
-  }
-
-  const ACH = [
-    { id: 'first_post', icon: '📝', ru: 'Первый пост', en: 'First post', dr: 'Опубликуй первый пост', de: 'Publish your first post', goal: 1, val: s => s.p },
-    { id: 'writer', icon: '✍️', ru: 'Автор', en: 'Writer', dr: 'Опубликуй 10 постов', de: 'Publish 10 posts', goal: 10, val: s => s.p },
-    { id: 'chronicler', icon: '📚', ru: 'Летописец', en: 'Chronicler', dr: 'Опубликуй 50 постов', de: 'Publish 50 posts', goal: 50, val: s => s.p },
-    { id: 'talker', icon: '💬', ru: 'Общительный', en: 'Sociable', dr: 'Оставь 5 комментариев', de: 'Leave 5 comments', goal: 5, val: s => s.c },
-    { id: 'soul', icon: '🗣️', ru: 'Душа компании', en: 'Life of the party', dr: 'Оставь 50 комментариев', de: 'Leave 50 comments', goal: 50, val: s => s.c },
-    { id: 'loved', icon: '❤️', ru: 'Признание', en: 'Recognition', dr: 'Получи 5 лайков на свои посты', de: 'Get 5 likes on your posts', goal: 5, val: s => s.l },
-    { id: 'star', icon: '🌟', ru: 'Звезда ленты', en: 'Feed star', dr: 'Получи 50 лайков на свои посты', de: 'Get 50 likes on your posts', goal: 50, val: s => s.l },
-    { id: 'critic', icon: '⭐', ru: 'Критик', en: 'Critic', dr: 'Оцени 5 сервисов', de: 'Rate 5 tools', goal: 5, val: s => s.r },
-    { id: 'judge', icon: '🎯', ru: 'Эксперт-оценщик', en: 'Master rater', dr: 'Оцени 25 сервисов', de: 'Rate 25 tools', goal: 25, val: s => s.r },
-    { id: 'founder', icon: '📢', ru: 'Основатель', en: 'Founder', dr: 'Создай свой канал', de: 'Create your own channel', goal: 1, val: s => s.ch },
-    { id: 'streak3', icon: '🔥', ru: 'На волне', en: 'On a roll', dr: 'Будь активен 3 дня подряд', de: 'Be active 3 days in a row', goal: 3, val: (s, x) => x.streak },
-    { id: 'streak7', icon: '⚡', ru: 'Неделя огня', en: 'Week of fire', dr: 'Будь активен 7 дней подряд', de: 'Be active 7 days in a row', goal: 7, val: (s, x) => x.streak },
-    { id: 'patron', icon: '💎', ru: 'Меценат', en: 'Patron', dr: 'Оформи Syntix Premium', de: 'Get Syntix Premium', goal: 1, val: (s, x) => (x.premium ? 1 : 0) },
-    { id: 'card', icon: '🪪', ru: 'Визитка', en: 'Calling card', dr: 'Добавь аватар и описание в профиль', de: 'Add an avatar and a bio to your profile', goal: 1, val: (s, x) => (x.profileComplete ? 1 : 0) }
-  ];
-
-  function achievements(stats, extra = {}) {
-    const s = stats || empty();
-    const x = { streak: streakOf(s.days), profileComplete: !!extra.profileComplete, premium: !!extra.premium };
-    return ACH.map(a => { const v = a.val(s, x); return { ...a, v: Math.min(v, a.goal), done: v >= a.goal }; });
-  }
-
-  // full stats for one user (profile page): only a handful of cheap `where uid ==` queries
-  async function loadUser(db, uid, profile) {
-    const q = (c, f, n) => db.collection(c).where(f, '==', uid).limit(n).get().then(s => s.docs).catch(e => { console.warn('gamify', c, e); return []; });
-    const [posts, coms, tcoms, rates, chans] = await Promise.all([
-      q('community_posts', 'uid', 100), q('community_comments', 'uid', 200), q('tool_comments', 'uid', 200), q('tool_ratings', 'uid', 200), q('channels', 'ownerUid', 50)
-    ]);
-    const ev = [];
-    posts.forEach(d => ev.push(['p', uid, ms(d.data().createdAt)]));
-    coms.concat(tcoms).forEach(d => ev.push(['c', uid, ms(d.data().createdAt)]));
-    rates.forEach(d => ev.push(['r', uid, ms(d.data().updatedAt)]));
-    chans.forEach(d => ev.push(['ch', uid, ms(d.data().createdAt)]));
-    const ids = posts.map(d => d.id), chunks = [];
-    for (let i = 0; i < ids.length; i += 10) chunks.push(ids.slice(i, i + 10));
-    const likeSnaps = await Promise.all(chunks.map(c => db.collection('post_likes').where('postId', 'in', c).get().then(s => s.docs).catch(() => [])));
-    const likeCount = {};
-    likeSnaps.flat().forEach(d => { const x = d.data(); if (x.uid !== uid) { ev.push(['l', uid, ms(x.createdAt)]); likeCount[x.postId] = (likeCount[x.postId] || 0) + 1; } });
-    const stats = build(ev).get(uid) || empty();
-    const complete = !!(profile && profile.avatar && profile.bio);
-    const premium = !!(window.Premium && Premium.isActive(uid));
-    const postsMeta = posts.map(d => { const x = d.data(); return { id: d.id, title: x.title || '', body: x.body || '', ms: ms(x.createdAt), likes: likeCount[d.id] || 0 }; });
-    return { stats, xp: stats.xp, info: levelInfo(stats.xp), streak: streakOf(stats.days), ev, posts: postsMeta, ach: achievements(stats, { profileComplete: complete, premium }) };
-  }
-
-  window.Gamify = { XP, DAY_CAP, DAY, ACH, levelInfo, build, achievements, streakOf, loadUser, empty };
-})();
+}
