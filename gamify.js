@@ -60,12 +60,13 @@
     { id: 'founder', icon: '📢', ru: 'Основатель', en: 'Founder', dr: 'Создай свой канал', de: 'Create your own channel', goal: 1, val: s => s.ch },
     { id: 'streak3', icon: '🔥', ru: 'На волне', en: 'On a roll', dr: 'Будь активен 3 дня подряд', de: 'Be active 3 days in a row', goal: 3, val: (s, x) => x.streak },
     { id: 'streak7', icon: '⚡', ru: 'Неделя огня', en: 'Week of fire', dr: 'Будь активен 7 дней подряд', de: 'Be active 7 days in a row', goal: 7, val: (s, x) => x.streak },
+    { id: 'patron', icon: '💎', ru: 'Меценат', en: 'Patron', dr: 'Оформи Syntix Premium', de: 'Get Syntix Premium', goal: 1, val: (s, x) => (x.premium ? 1 : 0) },
     { id: 'card', icon: '🪪', ru: 'Визитка', en: 'Calling card', dr: 'Добавь аватар и описание в профиль', de: 'Add an avatar and a bio to your profile', goal: 1, val: (s, x) => (x.profileComplete ? 1 : 0) }
   ];
 
   function achievements(stats, extra = {}) {
     const s = stats || empty();
-    const x = { streak: streakOf(s.days), profileComplete: !!extra.profileComplete };
+    const x = { streak: streakOf(s.days), profileComplete: !!extra.profileComplete, premium: !!extra.premium };
     return ACH.map(a => { const v = a.val(s, x); return { ...a, v: Math.min(v, a.goal), done: v >= a.goal }; });
   }
 
@@ -83,10 +84,13 @@
     const ids = posts.map(d => d.id), chunks = [];
     for (let i = 0; i < ids.length; i += 10) chunks.push(ids.slice(i, i + 10));
     const likeSnaps = await Promise.all(chunks.map(c => db.collection('post_likes').where('postId', 'in', c).get().then(s => s.docs).catch(() => [])));
-    likeSnaps.flat().forEach(d => { const x = d.data(); if (x.uid !== uid) ev.push(['l', uid, ms(x.createdAt)]); });
+    const likeCount = {};
+    likeSnaps.flat().forEach(d => { const x = d.data(); if (x.uid !== uid) { ev.push(['l', uid, ms(x.createdAt)]); likeCount[x.postId] = (likeCount[x.postId] || 0) + 1; } });
     const stats = build(ev).get(uid) || empty();
     const complete = !!(profile && profile.avatar && profile.bio);
-    return { stats, xp: stats.xp, info: levelInfo(stats.xp), streak: streakOf(stats.days), ach: achievements(stats, { profileComplete: complete }) };
+    const premium = !!(window.Premium && Premium.isActive(uid));
+    const postsMeta = posts.map(d => { const x = d.data(); return { id: d.id, title: x.title || '', body: x.body || '', ms: ms(x.createdAt), likes: likeCount[d.id] || 0 }; });
+    return { stats, xp: stats.xp, info: levelInfo(stats.xp), streak: streakOf(stats.days), ev, posts: postsMeta, ach: achievements(stats, { profileComplete: complete, premium }) };
   }
 
   window.Gamify = { XP, DAY_CAP, DAY, ACH, levelInfo, build, achievements, streakOf, loadUser, empty };

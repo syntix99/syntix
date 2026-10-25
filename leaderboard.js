@@ -73,6 +73,7 @@ function achCard(a, catalog) {
   const pct = Math.round((a.v / a.goal) * 100);
   return `<div class="ach ${a.done ? 'done' : ''}"><div class="ach-ic">${a.icon}</div><div class="ach-tx"><b>${esc(lang === 'ru' ? a.ru : a.en)}</b><p>${esc(lang === 'ru' ? a.dr : a.de)}</p>${catalog ? '' : `<div class="mini-bar"><i style="width:${pct}%"></i></div>`}</div></div>`;
 }
+const gem = uid => (window.Premium ? Premium.badge(uid) : '');
 const lvlPill = info => `<span class="lvlmini">${info.icon} ${esc(t('lvl'))} ${info.level}</span>`;
 
 function rankUsers() {
@@ -85,9 +86,10 @@ function rankUsers() {
 async function renderUsers() {
   const ranked = rankUsers(), top = ranked.slice(0, 30);
   await C.loadProfiles(top.map(e => e.uid).concat(me ? [me.uid] : []));
+  if (window.Premium) await Premium.load(top.map(e => e.uid).concat(me ? [me.uid] : []));
   const view = e => {
     const p = C.P.get(e.uid), name = C.name(e.uid), info = G.levelInfo(e.total.xp);
-    const ach = G.achievements(e.total, { profileComplete: !!(p && p.avatar && p.bio) }).filter(a => a.done);
+    const ach = G.achievements(e.total, { profileComplete: !!(p && p.avatar && p.bio), premium: !!(window.Premium && Premium.isActive(e.uid)) }).filter(a => a.done);
     return { ...e, name, info, icons: ach.slice(0, 4).map(a => a.icon).join(''), nAch: ach.length };
   };
   const rows = top.map(view);
@@ -96,14 +98,14 @@ async function renderUsers() {
   else {
     const i = ranked.findIndex(e => e.uid === me.uid);
     if (i < 0) $('#meCard').innerHTML = `<div class="notice">${esc(t('noYou'))}</div>`;
-    else { const v = view(ranked[i]); $('#meCard').innerHTML = `<div class="me-card"><div class="me-rank">#${i + 1}</div>${C.avatar(me.uid, v.name, 'lg')}<div class="me-info"><small>${esc(t('you'))}</small><b>${esc(v.name)}</b><span>${lvlPill(v.info)} · ${v.xp} XP · 🏅 ${v.nAch}</span></div></div>`; }
+    else { const v = view(ranked[i]); $('#meCard').innerHTML = `<div class="me-card"><div class="me-rank">#${i + 1}</div>${C.avatar(me.uid, v.name, 'lg')}<div class="me-info"><small>${esc(t('you'))}</small><b>${esc(v.name)}${gem(v.uid)}</b><span>${lvlPill(v.info)} · ${v.xp} XP · 🏅 ${v.nAch}</span></div></div>`; }
   }
   if (!rows.length) { $('#board').innerHTML = `<div class="empty-state"><div class="big">🏁</div><p>${esc(t('empty'))}</p></div>`; return; }
   const pod = [1, 0, 2].filter(i => rows[i]).map(i => {
     const e = rows[i];
-    return `<a class="pod p${i + 1}" href="./profile.html?uid=${encodeURIComponent(e.uid)}"><span class="medal">${['🥇', '🥈', '🥉'][i]}</span>${C.avatar(e.uid, e.name, 'lg')}<b>${esc(e.name)}</b>${lvlPill(e.info)}<span class="pxp">${e.xp} XP</span><span class="picons">${e.icons}</span></a>`;
+    return `<a class="pod p${i + 1}" href="./profile.html?uid=${encodeURIComponent(e.uid)}"><span class="medal">${['🥇', '🥈', '🥉'][i]}</span>${C.avatar(e.uid, e.name, 'lg')}<b>${esc(e.name)}${gem(e.uid)}</b>${lvlPill(e.info)}<span class="pxp">${e.xp} XP</span><span class="picons">${e.icons}</span></a>`;
   }).join('');
-  const list = rows.slice(3).map((e, k) => `<a class="lb-row ${me && e.uid === me.uid ? 'mine' : ''}" href="./profile.html?uid=${encodeURIComponent(e.uid)}"><span class="lb-rank">${k + 4}</span>${C.avatar(e.uid, e.name, 'md')}<span class="lb-name">${esc(e.name)}<small>${lvlPill(e.info)} <span class="picons">${e.icons}</span></small></span><b class="lb-xp">${e.xp} XP</b></a>`).join('');
+  const list = rows.slice(3).map((e, k) => `<a class="lb-row ${me && e.uid === me.uid ? 'mine' : ''}" href="./profile.html?uid=${encodeURIComponent(e.uid)}"><span class="lb-rank">${k + 4}</span>${C.avatar(e.uid, e.name, 'md')}<span class="lb-name">${esc(e.name)}${gem(e.uid)}<small>${lvlPill(e.info)} <span class="picons">${e.icons}</span></small></span><b class="lb-xp">${e.xp} XP</b></a>`).join('');
   $('#board').innerHTML = `<div class="podium">${pod}</div>${list ? `<div class="lb-list">${list}</div>` : ''}`;
 }
 

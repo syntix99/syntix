@@ -89,3 +89,17 @@ This package replaces the previous Supabase browser integration with Firebase Au
 - Upload **all** of: `manifest.json`, `sw.js`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png` (binary PNGs are easy to miss). Check that `https://<your-site>/icon-192.png` opens in a browser.
 - The old `manifest.webmanifest` is replaced by `manifest.json` — delete the old file.
 - The OS stores the icon at install time: **remove the already installed app and install again** after deploying.
+
+## v8 — Premium 💎 (paid features)
+**How it is secured.** Premium status lives in `premium/{uid}` = `{ until: <timestamp>, plan }`. Clients can only *read* it (rules: `allow write: if false`), so nobody can grant it to themselves. The valuable perks are enforced **by the Firestore rules**, not just hidden in the UI: long posts (15,000 chars), editing own posts, and the profile accent colour all call `isPremium()` in `firestore.rules`.
+
+**Perks:** 💎 badge (feed, profile, leaderboard) · accent colour + gold avatar ring · edit own posts · posts up to 15,000 characters · compare up to 6 tools · Insights tab (activity chart, best posting hours, top posts) · CSV export of favourites · "Patron" achievement. (Insights and CSV export are UI-gated only — they show data that is public anyway.)
+
+**Pages/files:** `premium.html` (pricing), `premium-page.js`, `premium.js` (status loader), `premium-config.js` (**edit prices and payment links here**), `functions/` + `firebase.json` + `.firebaserc` (optional webhook).
+
+### Taking payments — pick ONE way to activate Premium
+1. In your payment provider (e.g. **Stripe → Payment Links**) create two *recurring* prices (monthly / yearly). Put the payment-link URLs and the same prices into `premium-config.js`. The site adds `?client_reference_id=<uid>&prefilled_email=<email>` so every payment is tied to a user.
+2. **Manual activation (free, no server):** when a payment arrives, find the `client_reference_id` (= user ID) in the provider dashboard, then in Firebase Console → Firestore → collection `premium` → add a document whose **ID is that user ID** with fields `until` (type **timestamp**, the end of the paid period) and `plan` (string, e.g. `monthly`). Premium turns on immediately.
+3. **Automatic activation (needs the Blaze plan):** deploy `functions/` — `firebase functions:secrets:set STRIPE_SECRET_KEY`, `firebase functions:secrets:set STRIPE_WEBHOOK_SECRET`, `firebase deploy --only functions,firestore:rules`. Add the printed function URL as a webhook endpoint in Stripe for the events `checkout.session.completed` and `invoice.paid`. Try it in Stripe **test mode** first.
+- Never put secret keys (Stripe `sk_…`) into any file that is published on GitHub Pages.
+- **Republish `firestore.rules`** (new: `premium`, post editing, long posts, profile accent).
