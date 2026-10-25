@@ -1,4 +1,236 @@
-{
-  "firestore": { "rules": "firestore.rules" },
-  "functions": [{ "source": "functions", "codebase": "default" }]
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+    function str(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
+
+    // ---------- helpers for channels ----------
+    function channelPostOk(cid) {
+      return cid == '' || (
+        exists(/databases/$(database)/documents/channels/$(cid))
+        && (get(/databases/$(database)/documents/channels/$(cid)).data.mode == 'open'
+            || get(/databases/$(database)/documents/channels/$(cid)).data.ownerUid == request.auth.uid));
+    }
+    function isChannelOwner(cid) {
+      return cid != ''
+        && exists(/databases/$(database)/documents/channels/$(cid))
+        && get(/databases/$(database)/documents/channels/$(cid)).data.ownerUid == request.auth.uid;
+    }
+
+    // ---------- Public profiles ----------
+    match /profiles/{uid} {
+      function validProfile() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['displayName', 'bio', 'avatar', 'showFavorites', 'allowDms', 'lang', 'createdAt', 'updatedAt'])
+          && str(d.displayName, 1, 40)
+          && str(d.bio, 0, 300)
+          && str(d.avatar, 0, 40000)
+          && (d.avatar == '' || d.avatar.matches('^data:image/.*'))
+          && d.showFavorites is bool
+          && (!('allowDms' in d) || d.allowDms is bool)
+          && d.lang in ['ru', 'en']
+          && d.updatedAt == request.time;
+      }
+
+      allow read: if true;
+      allow create: if isOwner(uid) && validProfile() && request.resource.data.createdAt == request.time;
+      allow update: if isOwner(uid) && validProfile() && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isOwner(uid);
+
+      match /favorites/{slug} {
+        allow read: if isOwner(uid)
+          || (exists(/databases/$(database)/documents/profiles/$(uid))
+              && get(/databases/$(database)/documents/profiles/$(uid)).data.showFavorites == true);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['slug', 'toolName', 'createdAt'])
+          && request.resource.data.slug == slug
+          && str(request.resource.data.toolName, 1, 80)
+          && request.resource.data.createdAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+
+      // People this user follows (private to the user; doc id = followed uid)
+      match /following/{target} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && target != uid
+          && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+          && request.resource.data.uid == target
+          && request.resource.data.createdAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+
+      // Channels this user follows (private to the user)
+      match /joined/{cid} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['cid', 'joinedAt'])
+          && request.resource.data.cid == cid
+          && request.resource.data.joinedAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+    }
+
+    // ---------- Channels ----------
+    match /channels/{cid} {
+      function validChannel() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['name', 'desc', 'icon', 'mode', 'ownerUid', 'ownerName', 'createdAt'])
+          && str(d.name, 3, 30)
+          && str(d.desc, 0, 200)
+          && str(d.icon, 1, 8)
+          && d.mode in ['open', 'owner']
+          && str(d.ownerName, 1, 100);
+      }
+      allow read: if true;
+      allow create: if signedIn() && validChannel()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+      allow update: if signedIn() && resource.data.ownerUid == request.auth.uid && validChannel()
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // ---------- Feed posts (optionally inside a channel) ----------
+    match /community_posts/{id} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['title', 'body', 'toolName', 'channelId', 'uid', 'authorName', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.title, 0, 120)
+        && str(request.resource.data.body, 1, 5000)
+        && str(request.resource.data.toolName, 0, 80)
+        && str(request.resource.data.get('channelId', ''), 0, 40)
+        && channelPostOk(request.resource.data.get('channelId', ''))
+        && str(request.resource.data.authorName, 1, 100)
+        && request.resource.data.createdAt == request.time;
+      allow update: if false;
+      // the author, or the owner of the channel the post lives in
+      allow delete: if isOwner(resource.data.uid) || isChannelOwner(resource.data.get('channelId', ''));
+    }
+
+    match /community_comments/{id} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['postId', 'body', 'uid', 'authorName', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.postId, 1, 100)
+        && str(request.resource.data.body, 1, 3000)
+        && str(request.resource.data.authorName, 1, 100)
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if isOwner(resource.data.uid);
+    }
+
+    match /tool_comments/{id} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['toolName', 'body', 'uid', 'authorName', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.toolName, 1, 80)
+        && str(request.resource.data.body, 1, 3000)
+        && str(request.resource.data.authorName, 1, 100)
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if isOwner(resource.data.uid);
+    }
+
+    // ---------- Tool ratings (doc id = <toolSlug>_<uid>) ----------
+    match /tool_ratings/{rid} {
+      allow read: if true;
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(['toolSlug', 'uid', 'value', 'updatedAt'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.toolSlug, 1, 80)
+        && rid == request.resource.data.toolSlug + '_' + request.auth.uid
+        && request.resource.data.value is int
+        && request.resource.data.value >= 1
+        && request.resource.data.value <= 5
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // ---------- Post likes (doc id = <postId>_<uid>) ----------
+    match /post_likes/{lid} {
+      allow read: if true;
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(['postId', 'uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.postId, 1, 100)
+        && lid == request.resource.data.postId + '_' + request.auth.uid
+        && request.resource.data.createdAt == request.time;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // ---------- Reports: write-only, review in the Firebase Console ----------
+    match /reports/{rid} {
+      allow read: if false;
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(['col', 'docId', 'uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.col in ['community_posts', 'community_comments', 'tool_comments']
+        && str(request.resource.data.docId, 1, 100)
+        && rid == request.resource.data.col + '_' + request.resource.data.docId + '_' + request.auth.uid
+        && request.resource.data.createdAt == request.time;
+      allow delete: if false;
+    }
+
+    // ---------- Tool suggestions ----------
+    match /tool_suggestions/{sid} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['name', 'url', 'category', 'note', 'uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.name, 2, 80)
+        && str(request.resource.data.url, 8, 200)
+        && request.resource.data.url.matches('^https?://.*')
+        && request.resource.data.category in ['text', 'image', 'video', 'code', 'work']
+        && str(request.resource.data.note, 0, 500)
+        && request.resource.data.createdAt == request.time;
+    }
+
+    // ---------- Direct messages: thread id = <smallerUid>_<largerUid> ----------
+    match /dm_threads/{tid} {
+      function validThread() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['participants', 'lastMessage', 'lastAt', 'lastSender'])
+          && d.participants is list
+          && d.participants.size() == 2
+          && request.auth.uid in d.participants
+          && str(d.lastMessage, 0, 200)
+          && d.lastSender == request.auth.uid
+          && d.lastAt == request.time;
+      }
+      // the recipient can switch DMs off in their profile (applies to new conversations)
+      function dmAllowed(p) {
+        let other = request.auth.uid == p[0] ? p[1] : p[0];
+        return !exists(/databases/$(database)/documents/profiles/$(other))
+          || get(/databases/$(database)/documents/profiles/$(other)).data.get('allowDms', true) == true;
+      }
+
+      allow read: if signedIn() && request.auth.uid in resource.data.participants;
+      allow create: if signedIn() && validThread()
+        && request.resource.data.participants[0] < request.resource.data.participants[1]
+        && tid == request.resource.data.participants[0] + '_' + request.resource.data.participants[1]
+        && dmAllowed(request.resource.data.participants);
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.participants
+        && validThread()
+        && request.resource.data.participants == resource.data.participants;
+      allow delete: if false;
+
+      match /messages/{mid} {
+        allow read: if signedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/dm_threads/$(tid)).data.participants;
+        allow create: if signedIn()
+          && request.auth.uid in getAfter(/databases/$(database)/documents/dm_threads/$(tid)).data.participants
+          && request.resource.data.keys().hasOnly(['sender', 'text', 'createdAt'])
+          && request.resource.data.sender == request.auth.uid
+          && str(request.resource.data.text, 1, 2000)
+          && request.resource.data.createdAt == request.time;
+        allow update, delete: if false;
+      }
+    }
+  }
 }
