@@ -12,7 +12,7 @@ const TXT = {
     saved: 'Профиль сохранён.', fail: 'Не удалось сохранить. Проверь правила Firestore.',
     name: 'Имя', bio: 'О себе', avatar: 'Аватар', chooseAvatar: 'Загрузить фото', removeAvatar: 'Убрать фото',
     badFile: 'Выбери файл изображения.', needName: 'Укажи имя.',
-    settings: 'Настройки', lang: 'Язык интерфейса', showFav: 'Показывать избранное другим пользователям',
+    settings: 'Настройки', lang: 'Язык интерфейса', showFav: 'Показывать избранное другим пользователям', allowDms: 'Разрешить личные сообщения', writeDm: '✉ Написать', navFeed: 'Лента', navMessages: 'Сообщения',
     logout: 'Выйти', copy: 'Копировать ссылку', copied: 'Ссылка скопирована',
     favorites: 'Избранное', comments: 'Активность', ratings: 'Оценки', rateEmpty: 'Оценок пока нет. Оцени сервис на его странице.',
     favEmpty: 'В избранном пока пусто. Открой карточку AI-сервиса и нажми «В избранное».',
@@ -33,7 +33,7 @@ const TXT = {
     saved: 'Profile saved.', fail: 'Could not save. Check Firestore rules.',
     name: 'Name', bio: 'About', avatar: 'Avatar', chooseAvatar: 'Upload photo', removeAvatar: 'Remove photo',
     badFile: 'Choose an image file.', needName: 'Enter a name.',
-    settings: 'Settings', lang: 'Interface language', showFav: 'Show my favorites to other users',
+    settings: 'Settings', lang: 'Interface language', showFav: 'Show my favorites to other users', allowDms: 'Allow direct messages', writeDm: '✉ Message', navFeed: 'Feed', navMessages: 'Messages',
     logout: 'Log out', copy: 'Copy link', copied: 'Link copied',
     favorites: 'Favorites', comments: 'Activity', ratings: 'Ratings', rateEmpty: 'No ratings yet. Rate a tool on its page.',
     favEmpty: 'No favorites yet. Open an AI tool page and press “Add to favorites”.',
@@ -99,7 +99,7 @@ function render() {
       <p class="muted">${t('since')} ${esc(dateText(p.createdAt))}</p>
     </div>
     <div class="profile-actions">
-      <button class="btn ghost" id="copyBtn" type="button" data-link="${esc(link)}">${t('copy')}</button>
+      ${!isOwn && p.allowDms !== false ? `<a class="btn primary" href="./messages.html?to=${encodeURIComponent(uid)}">${t('writeDm')}</a>` : ''}<button class="btn ghost" id="copyBtn" type="button" data-link="${esc(link)}">${t('copy')}</button>
       ${isOwn ? `<button class="btn ghost" id="editBtn" type="button">${t('edit')}</button><button class="btn ghost" id="logoutBtn" type="button">${t('logout')}</button>` : ''}
     </div>
   </section>
@@ -118,6 +118,7 @@ function render() {
     <label class="field"><span>${t('bio')}</span><textarea id="pBio" rows="4" maxlength="300">${esc(p.bio || '')}</textarea></label>
     <label class="field"><span>${t('lang')}</span><select id="pLang"><option value="ru" ${lang === 'ru' ? 'selected' : ''}>Русский</option><option value="en" ${lang === 'en' ? 'selected' : ''}>English</option></select></label>
     <label class="profile-check"><input type="checkbox" id="pShowFav" ${p.showFavorites ? 'checked' : ''}><span>${t('showFav')}</span></label>
+    <label class="profile-check"><input type="checkbox" id="pAllowDms" ${p.allowDms !== false ? 'checked' : ''}><span>${t('allowDms')}</span></label>
     <div class="profile-actions"><button class="btn primary" id="saveBtn" type="submit">${t('save')}</button><button class="btn ghost" id="cancelBtn" type="button">${t('cancel')}</button></div>
     <p class="message" id="pMsg" role="status"></p>
   </form>` : ''}
@@ -160,6 +161,7 @@ function bind() {
       bio: $('#pBio').value.trim().slice(0, 300),
       avatar: pendingAvatar === undefined ? (profile.avatar || '') : pendingAvatar,
       showFavorites: $('#pShowFav').checked,
+      allowDms: $('#pAllowDms').checked,
       lang: $('#pLang').value,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
@@ -212,7 +214,7 @@ async function activityHtml() {
   if (!rows.length) return `<div class="detail-panel"><p>${esc(t('comEmpty'))}</p></div>`;
   return rows.slice(0, 60).map(r => {
     const kind = r.c === 'community_posts' ? t('kPost') : r.c === 'community_comments' ? t('kComment') : t('kTool');
-    const href = r.c === 'tool_comments' ? `./tool.html?id=${encodeURIComponent(slug(r.toolName || ''))}#comments` : './community.html';
+    const href = r.c === 'tool_comments' ? `./tool.html?id=${encodeURIComponent(slug(r.toolName || ''))}#comments` : './feed.html';
     const label = r.c === 'tool_comments' ? r.toolName : (r.toolName || '');
     return `<article class="feed-card">
       <div class="feed-meta"><span>${esc(kind)}</span><span>·</span><time>${esc(dateText(r.createdAt))}</time></div>
@@ -244,7 +246,7 @@ async function run() {
     if (snap.exists) profile = snap.data();
     else if (own()) {
       const ts = firebase.firestore.FieldValue.serverTimestamp();
-      const d = { displayName: (me.displayName || me.email?.split('@')[0] || t('member')).trim().slice(0, 40) || t('member'), bio: '', avatar: '', showFavorites: true, lang, createdAt: ts, updatedAt: ts };
+      const d = { displayName: (me.displayName || me.email?.split('@')[0] || t('member')).trim().slice(0, 40) || t('member'), bio: '', avatar: '', showFavorites: true, allowDms: true, lang, createdAt: ts, updatedAt: ts };
       await ref.set(d);
       profile = { ...d, createdAt: null, updatedAt: null };
     } else profile = { displayName: t('member'), bio: '', avatar: '', showFavorites: false, createdAt: null };

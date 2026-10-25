@@ -61,3 +61,11 @@ This package replaces the previous Supabase browser integration with Firebase Au
 - **Tool pages:** latest community posts about the tool (`tool-posts.js`).
 - **Profile:** new "Ratings" tab.
 - Republish `firestore.rules` after uploading.
+
+## v5 — Feed, channels, direct messages
+- **`community.html` is now a redirect** to the new **`feed.html`** (delete the old `community.js` from your repo, it is no longer used). Old posts/comments/likes stay: they use the same collections.
+- **Channels:** create your own (name, description, icon, "anyone can post" or "owner-only"), follow/unfollow, share link, owner can delete the channel and any post inside it. Collections: `channels`, `profiles/{uid}/joined`, posts carry `channelId`.
+- **Direct messages:** `messages.html` — real-time chats (`dm_threads/{uidA_uidB}/messages`). Open a chat via the ✉ button under a post or on a member profile (`messages.html?to=<uid>`). Members can switch DMs off in profile settings (`allowDms`); unread dots are tracked per device.
+- **Feed UI:** avatars, relative time, likes, inline comments, sort (latest/top), search, load-more, tool and channel pills.
+- **Shared helpers:** `core.js` (profiles cache, avatars, time, links). Styles in `social.css`.
+- **Republish `firestore.rules`** — it was rewritten (channels, DMs, new post fields).
