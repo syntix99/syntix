@@ -153,7 +153,20 @@ function subscribeThreads() {
   });
 }
 
+function trackViewport() {
+  const vv = window.visualViewport;
+  if (!vv) return;
+  const fit = () => {
+    const root = document.documentElement.style;
+    root.setProperty('--vvh', vv.height + 'px');
+    root.setProperty('--vvt', vv.offsetTop + 'px');
+    const box = $('#msgs'); if (box) box.scrollTop = box.scrollHeight;
+  };
+  vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); fit();
+}
+
 function start() {
+  trackViewport();
   paintStatic();
   if (!C.init()) { $('#chat').innerHTML = errBox({ message: 'config' }); return; }
   db = C.db;

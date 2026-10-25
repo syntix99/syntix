@@ -145,17 +145,43 @@
 
 @media(max-width:1020px){.feed-page{grid-template-columns:210px minmax(0,1fr)}.feed-right{display:none}}
 @media(max-width:760px){
-  .feed-page{grid-template-columns:minmax(0,1fr);gap:14px;padding-top:16px}
+  .feed-page{grid-template-columns:minmax(0,1fr);gap:12px;padding-top:14px;padding-bottom:30px}
   .feed-left{position:static}
-  .side-card{padding:10px}
-  .chan-list{display:flex;max-height:none;overflow-x:auto;gap:6px;padding-bottom:4px}
-  .feed-left .side-card{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
-  .feed-left .side-head{width:100%}
-  .chan{width:auto;white-space:nowrap;border-color:var(--line)}
-  .compose-row{flex-direction:column}
-  .dm-page{grid-template-columns:minmax(0,1fr);height:calc(100vh - 130px)}
+  .feed-left .side-card{padding:6px 0 0;border:0;background:none}
+  .side-head{padding:0 2px 8px}
+  .chan-scroll{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .chan-scroll::-webkit-scrollbar{display:none}
+  .chan-list{display:contents;max-height:none}
+  .chan{flex:none;width:auto;white-space:nowrap;padding:9px 14px;border-color:var(--line);border-radius:999px;background:#0f121d}
+  .chan.active{background:#8b72fa22}
+  .mini-btn{width:36px;height:36px}
+  .compose-card{padding:14px;border-radius:18px}
+  .compose-row .av{display:none}
+  .compose-bar select{flex:1 1 calc(50% - 4px);max-width:none;height:42px}
+  .compose-bar .counter{order:5;margin-left:0}
+  .compose-bar .btn{flex:1 1 100%;order:6;height:44px}
+  .compose-fields input,.compose-fields textarea,.compose-bar select,.cform input,.dlg-box input,.dlg-box textarea,.dlg-box select,.feed-search input,.dm-form textarea{font-size:16px}
+  .feed-search{max-width:none;flex:1 1 100%}
+  .pills{width:100%}.pill-btn{flex:1;padding:10px 14px}
+  .post{padding:15px 14px 8px;border-radius:18px}
+  .post-body{font-size:14px}
+  .act{min-height:40px;padding:8px 11px}
+  .linkbtn{padding:10px 6px}
+  .cform input{height:44px}
+  .chan-banner{padding:16px;gap:12px}
+  .cb-icon{width:54px;height:54px;font-size:28px}
+  .cb-actions{width:100%}.cb-actions .btn{flex:1}
+  .dlg{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow:auto}
+  /* messages: list page + full-screen chat */
+  .dm-page{display:block;height:auto;min-height:calc(100vh - 190px);padding-top:12px;padding-bottom:12px}
+  .dm-list{border-radius:18px;min-height:60vh}
   .dm-page .dm-chat{display:none}
   .dm-page.chat-open .dm-list{display:none}
-  .dm-page.chat-open .dm-chat{display:flex}
-  .dm-back{display:inline-grid}
+  .dm-page.chat-open .dm-chat{display:flex;position:fixed;left:0;right:0;top:var(--vvt,0px);height:100vh;height:var(--vvh,100dvh);z-index:80;border:0;border-radius:0;background:#0b0e18}
+  .dm-back{display:inline-grid;width:40px;height:40px;font-size:18px}
+  .dm-head{padding:10px 12px;padding-top:max(10px,env(safe-area-inset-top))}
+  .dm-form{padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom))}
+  .dm-form .btn{height:44px}
+  .dm-msgs{padding:12px;overscroll-behavior:contain}
+  .bubble{max-width:84%;font-size:14px}
 }

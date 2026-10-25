@@ -44,5 +44,30 @@
     } catch { prompt('', location.href); }
   });
 
+  function tabbar() {
+    const r = ru();
+    const file = location.pathname.split('/').pop() || 'index.html';
+    const here = { 'index.html': 'index.html', 'tool.html': 'index.html', 'feed.html': 'feed.html', 'community.html': 'feed.html', 'messages.html': 'messages.html', 'profile.html': 'profile.html' }[file] || '';
+    const items = [
+      ['index.html', '✦', r ? 'Каталог' : 'Directory'],
+      ['feed.html', '☰', r ? 'Лента' : 'Feed'],
+      ['messages.html', '✉', r ? 'Сообщения' : 'Messages'],
+      ['profile.html', '☺', r ? 'Профиль' : 'Profile']
+    ];
+    let bar = document.querySelector('.tabbar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.className = 'tabbar';
+      bar.setAttribute('role', 'navigation');
+      document.body.append(bar);
+      document.body.classList.add('has-tabbar');
+      const l = document.querySelector('#language');
+      if (l) l.addEventListener('click', () => setTimeout(tabbar, 0));
+    }
+    bar.setAttribute('aria-label', r ? 'Основная навигация' : 'Main navigation');
+    bar.innerHTML = items.map(([h, i, label]) => `<a href="./${h}" class="${h === here ? 'on' : ''}"${h === here ? ' aria-current="page"' : ''}><span aria-hidden="true">${i}</span>${label}</a>`).join('');
+  }
+
   skipLink();
+  tabbar();
 })();
