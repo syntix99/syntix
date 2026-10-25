@@ -83,4 +83,9 @@ This package replaces the previous Supabase browser integration with Firebase Au
 - **Unread DM badge** on the Messages tab/link and in the page title (`badge.js`).
 - **Following:** follow people (profile + feed) and channels; "Подписки" tab in the feed (`profiles/{uid}/following`, private). Republish `firestore.rules`.
 - **Feed:** clickable #hashtags + trending tags row, inline previews for direct https image links, draft autosave, Ctrl/Cmd+Enter to publish.
-- **PWA:** installable on phones (`manifest.webmanifest`, `sw.js`, icons). Network-first, so updates always win.
+- **PWA:** installable on phones (`manifest.json`, `sw.js`, icons). Network-first, so updates always win.
+
+### Installing the app / icon troubleshooting
+- Upload **all** of: `manifest.json`, `sw.js`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png` (binary PNGs are easy to miss). Check that `https://<your-site>/icon-192.png` opens in a browser.
+- The old `manifest.webmanifest` is replaced by `manifest.json` — delete the old file.
+- The OS stores the icon at install time: **remove the already installed app and install again** after deploying.
