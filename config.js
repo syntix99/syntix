@@ -1,18 +1,3 @@
-// Syntix — Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyAJpB6W2rEmK-_9UrMziTXVdN9tnO4AC-o",
-  authDomain: "syntix-b5c57.firebaseapp.com",
-  projectId: "syntix-b5c57",
-  storageBucket: "syntix-b5c57.firebasestorage.app",
-  messagingSenderId: "316671040037",
-  appId: "1:316671040037:web:cd3ff92fb706964c3dbdcc",
-  measurementId: "G-CR7DTE37TG"
-};
-
-// Export config for other scripts if using ES modules
-if (typeof window !== "undefined") {
-  window.firebaseConfig = firebaseConfig;
-}
-
-// Scripts read window.SYNTIX_CONFIG.firebase
-window.SYNTIX_CONFIG = { firebase: firebaseConfig };
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090b13"><meta http-equiv="refresh" content="0; url=./feed.html"><title>Лента — Syntix</title><link rel="stylesheet" href="./styles.css"><script>location.replace("./feed.html"+location.search+location.hash)</script></head>
+<body><main class="wrap" style="padding:80px 0;text-align:center"><p>Сообщество стало лентой. <a href="./feed.html">Перейти в ленту →</a></p></main></body></html>
