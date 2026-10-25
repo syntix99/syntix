@@ -54,3 +54,10 @@ This package replaces the previous Supabase browser integration with Firebase Au
 - **Search:** multi-word matching ("code chat"), `Esc` clears the search field.
 - **Shared UI (`ui.js`):** toast notifications, "skip to content" link, Share button on tool pages.
 - **Accessibility:** visible focus rings, `aria-live` result counter, reduced-motion support.
+
+## v4
+- **Likes** on community posts (`post_likes`), **reports** on posts/comments (`reports`, write-only: review them in Firebase Console → Firestore → `reports`; each report holds the collection name and document id).
+- **Suggest a tool:** `suggest.html` writes to `tool_suggestions` (readable only by its author; you read all of them in the Console). Linked from the home page footer.
+- **Tool pages:** latest community posts about the tool (`tool-posts.js`).
+- **Profile:** new "Ratings" tab.
+- Republish `firestore.rules` after uploading.

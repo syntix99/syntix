@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090b13">
+<meta name="description" content="Предложи AI-сервис для каталога Syntix.">
+<title>Предложить сервис — Syntix</title>
+<link rel="stylesheet" href="./styles.css"><link rel="stylesheet" href="./profile.css">
+<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script defer src="./config.js"></script><script defer src="./nav-auth.js"></script><script defer src="./suggest.js"></script><script defer src="./ui.js"></script>
+</head>
+<body><div class="glow g1"></div><div class="glow g2"></div>
+<header class="wrap top"><a class="brand" href="./index.html"><b>S</b> syntix<span>.</span></a><nav><a href="./index.html#catalog" id="navCatalog">Каталог</a><a href="./community.html" id="navCommunity">Сообщество</a></nav><div class="actions"><button id="language" type="button">EN</button><a class="btn ghost" href="./account.html">Войти</a></div></header>
+<main class="wrap community-page">
+<section class="community-hero"><small>SYNTIX DIRECTORY</small><h1 id="h">Предложи <em>сервис.</em></h1><p id="sub">Знаешь полезный AI-инструмент, которого нет в каталоге? Расскажи нам.</p></section>
+<section class="community-layout"><div class="community-main">
+<div id="signPrompt" class="community-sign"><h3 id="signTitle"></h3><p id="signText"></p><a class="btn primary" href="./account.html#signup" id="signLink"></a></div>
+<form id="form" class="community-compose" hidden>
+<label class="field"><span id="lName"></span><input id="sName" maxlength="80" required></label>
+<label class="field"><span id="lUrl"></span><input id="sUrl" type="url" maxlength="200" required placeholder="https://"></label>
+<label class="field"><span id="lCat"></span><select id="sCat"></select></label>
+<label class="field"><span id="lNote"></span><textarea id="sNote" rows="4" maxlength="500"></textarea></label>
+<button class="btn primary" id="sSubmit" type="submit"></button><p class="message" id="sMsg" role="status"></p>
+</form></div>
+<aside class="community-side"><div class="detail-panel"><small>HOW IT WORKS</small><h3 id="sideTitle"></h3><p id="sideText"></p></div></aside>
+</section></main>
+<footer class="wrap footer"><a class="brand" href="./index.html"><b>S</b> syntix<span>.</span></a><p>Independent AI tools directory.</p><span>© <span id="year"></span> Syntix</span></footer>
+</body></html>

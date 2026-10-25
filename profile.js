@@ -14,7 +14,7 @@ const TXT = {
     badFile: 'Выбери файл изображения.', needName: 'Укажи имя.',
     settings: 'Настройки', lang: 'Язык интерфейса', showFav: 'Показывать избранное другим пользователям',
     logout: 'Выйти', copy: 'Копировать ссылку', copied: 'Ссылка скопирована',
-    favorites: 'Избранное', comments: 'Активность',
+    favorites: 'Избранное', comments: 'Активность', ratings: 'Оценки', rateEmpty: 'Оценок пока нет. Оцени сервис на его странице.',
     favEmpty: 'В избранном пока пусто. Открой карточку AI-сервиса и нажми «В избранное».',
     favPrivate: 'Пользователь скрыл своё избранное.',
     comEmpty: 'Публикаций и комментариев пока нет.',
@@ -35,7 +35,7 @@ const TXT = {
     badFile: 'Choose an image file.', needName: 'Enter a name.',
     settings: 'Settings', lang: 'Interface language', showFav: 'Show my favorites to other users',
     logout: 'Log out', copy: 'Copy link', copied: 'Link copied',
-    favorites: 'Favorites', comments: 'Activity',
+    favorites: 'Favorites', comments: 'Activity', ratings: 'Ratings', rateEmpty: 'No ratings yet. Rate a tool on its page.',
     favEmpty: 'No favorites yet. Open an AI tool page and press “Add to favorites”.',
     favPrivate: 'This user keeps favorites private.',
     comEmpty: 'No posts or comments yet.',
@@ -49,6 +49,13 @@ const slug = s => String(s).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/
 let lang = localStorage.getItem('syntix-lang') || 'ru';
 const t = k => TXT[lang][k] || TXT.ru[k] || k;
 let db, auth, me = null, uid = null, profile = null, tools = [], tab = 'favorites', pendingAvatar, started = false;
+const errBox = e => {
+  const code = (e && (e.code || e.message)) || '';
+  const hint = code === 'permission-denied'
+    ? (lang === 'ru' ? ' Правила Firestore не пускают: опубликуй актуальный firestore.rules (Firebase Console → Firestore Database → Rules → Publish).' : ' Firestore rules deny access: publish the latest firestore.rules (Firebase Console → Firestore Database → Rules → Publish).')
+    : '';
+  return `<div class="detail-panel"><p>${esc(t('loadError'))}${esc(hint)}</p><p class="muted">${esc(code)}</p></div>`;
+};
 const root = $('#profile');
 const own = () => !!me && me.uid === uid;
 
@@ -116,6 +123,7 @@ function render() {
   </form>` : ''}
   <div class="ptabs">
     <button type="button" data-tab="favorites" class="${tab === 'favorites' ? 'active' : ''}">♥ ${t('favorites')}</button>
+    <button type="button" data-tab="ratings" class="${tab === 'ratings' ? 'active' : ''}">★ ${t('ratings')}</button>
     <button type="button" data-tab="comments" class="${tab === 'comments' ? 'active' : ''}">✎ ${t('comments')}</button>
   </div>
   <div id="tabBody" class="feed-list"></div>`;
@@ -174,8 +182,8 @@ function bind() {
 async function loadTab() {
   const box = $('#tabBody');
   box.innerHTML = '<div class="detail-panel">…</div>';
-  try { box.innerHTML = tab === 'favorites' ? await favoritesHtml() : await activityHtml(); }
-  catch (e) { console.error(e); box.innerHTML = `<div class="detail-panel"><p>${esc(t('loadError'))}</p></div>`; return; }
+  try { box.innerHTML = tab === 'favorites' ? await favoritesHtml() : tab === 'ratings' ? await ratingsHtml() : await activityHtml(); }
+  catch (e) { console.error('Syntix profile tab:', e); box.innerHTML = errBox(e); return; }
   box.querySelectorAll('[data-unfav]').forEach(b => b.onclick = async () => {
     b.disabled = true;
     try { await db.collection('profiles').doc(uid).collection('favorites').doc(b.dataset.unfav).delete(); loadTab(); } catch (e) { console.error(e); b.disabled = false; }
@@ -215,6 +223,17 @@ async function activityHtml() {
   }).join('');
 }
 
+async function ratingsHtml() {
+  const snap = await db.collection('tool_ratings').where('uid', '==', uid).limit(100).get();
+  const rows = snap.docs.map(d => d.data()).sort((a, b) => (b.updatedAt?.toMillis?.() || 0) - (a.updatedAt?.toMillis?.() || 0));
+  if (!rows.length) return `<div class="detail-panel"><p>${esc(t('rateEmpty'))}</p></div>`;
+  return rows.map(r => {
+    const tool = tools.find(x => slug(x[0]) === r.toolSlug);
+    if (!tool) return '';
+    return `<article class="feed-card fav-card"><div class="icon ${esc(tool[2])}">${esc(tool[1])}</div><div class="fav-text"><h3>${esc(tool[0])}</h3><p class="feed-body rating-stars" aria-label="${r.value}/5">${'★'.repeat(r.value)}${'☆'.repeat(5 - r.value)}</p><div class="feed-bottom"><a class="feed-tool" href="./tool.html?id=${encodeURIComponent(r.toolSlug)}">${t('open')}</a></div></div></article>`;
+  }).join('');
+}
+
 async function run() {
   const param = new URLSearchParams(location.search).get('uid');
   uid = param || (me && me.uid);
@@ -233,8 +252,8 @@ async function run() {
     document.title = `${profile.displayName} — Syntix`;
     render();
   } catch (e) {
-    console.error(e);
-    root.innerHTML = `<div class="detail-panel"><p>${esc(t('loadError'))}</p></div>`;
+    console.error('Syntix profile:', e);
+    root.innerHTML = errBox(e);
   }
 }
 

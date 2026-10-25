@@ -91,5 +91,44 @@ service cloud.firestore {
         && request.resource.data.updatedAt == request.time;
       allow delete: if signedIn() && resource.data.uid == request.auth.uid;
     }
+
+    // ---------- Post likes (doc id = <postId>_<uid>) ----------
+    match /post_likes/{lid} {
+      allow read: if true;
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(['postId', 'uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.postId, 1, 100)
+        && lid == request.resource.data.postId + '_' + request.auth.uid
+        && request.resource.data.createdAt == request.time;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // ---------- Reports: write-only for users, review them in the Firebase Console ----------
+    match /reports/{rid} {
+      allow read: if false;
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(['col', 'docId', 'uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.col in ['community_posts', 'community_comments', 'tool_comments']
+        && str(request.resource.data.docId, 1, 100)
+        && rid == request.resource.data.col + '_' + request.resource.data.docId + '_' + request.auth.uid
+        && request.resource.data.createdAt == request.time;
+      allow delete: if false;
+    }
+
+    // ---------- Tool suggestions: users can send and see only their own ----------
+    match /tool_suggestions/{sid} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['name', 'url', 'category', 'note', 'uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.name, 2, 80)
+        && str(request.resource.data.url, 8, 200)
+        && request.resource.data.url.matches('^https?://.*')
+        && request.resource.data.category in ['text', 'image', 'video', 'code', 'work']
+        && str(request.resource.data.note, 0, 500)
+        && request.resource.data.createdAt == request.time;
+    }
   }
 }
