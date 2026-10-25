@@ -47,10 +47,11 @@
   function tabbar() {
     const r = ru();
     const file = location.pathname.split('/').pop() || 'index.html';
-    const here = { 'index.html': 'index.html', 'tool.html': 'index.html', 'feed.html': 'feed.html', 'community.html': 'feed.html', 'messages.html': 'messages.html', 'profile.html': 'profile.html' }[file] || '';
+    const here = { 'index.html': 'index.html', 'tool.html': 'index.html', 'feed.html': 'feed.html', 'community.html': 'feed.html', 'leaderboard.html': 'leaderboard.html', 'messages.html': 'messages.html', 'profile.html': 'profile.html' }[file] || '';
     const items = [
       ['index.html', '✦', r ? 'Каталог' : 'Directory'],
       ['feed.html', '☰', r ? 'Лента' : 'Feed'],
+      ['leaderboard.html', '🏆', r ? 'Рейтинг' : 'Top'],
       ['messages.html', '✉', r ? 'Сообщения' : 'Messages'],
       ['profile.html', '☺', r ? 'Профиль' : 'Profile']
     ];

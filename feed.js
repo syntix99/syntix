@@ -2,7 +2,7 @@
 const C = window.Syntix, $ = s => document.querySelector(s), esc = C.esc;
 const TXT = {
   ru: {
-    catalog: 'Каталог', feed: 'Лента', messages: 'Сообщения', login: 'Войти',
+    catalog: 'Каталог', feed: 'Лента', messages: 'Сообщения', navTop: 'Рейтинг', login: 'Войти',
     channels: 'КАНАЛЫ', newChannelShort: '＋', allPosts: 'Все посты', noChannels: 'Каналов пока нет. Создай первый!',
     signTitle: 'Есть чем поделиться?', signText: 'Войди или создай бесплатный аккаунт, чтобы публиковать, комментировать и писать в личные сообщения.', signLink: 'Войти или зарегистрироваться',
     titlePh: 'Заголовок (необязательно)', composePh: 'Поделись находкой, вопросом или промптом…', publish: 'Опубликовать', busy: 'Публикуем…',
@@ -22,7 +22,7 @@ const TXT = {
     permHint: ' Опубликуй актуальный firestore.rules (Firebase Console → Firestore → Rules).', posts: 'постов', anonymous: 'Участник Syntix'
   },
   en: {
-    catalog: 'Directory', feed: 'Feed', messages: 'Messages', login: 'Log in',
+    catalog: 'Directory', feed: 'Feed', messages: 'Messages', navTop: 'Leaderboard', login: 'Log in',
     channels: 'CHANNELS', newChannelShort: '＋', allPosts: 'All posts', noChannels: 'No channels yet. Create the first one!',
     signTitle: 'Something to share?', signText: 'Sign in or create a free account to post, comment and send direct messages.', signLink: 'Log in or sign up',
     titlePh: 'Title (optional)', composePh: 'Share a find, a question or a prompt…', publish: 'Publish', busy: 'Publishing…',

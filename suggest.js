@@ -1,12 +1,12 @@
 (() => {
 const TXT = {
-  ru: { catalog:'Каталог', community:'Лента', messages:'Сообщения', h:'Предложи <em>сервис.</em>', sub:'Знаешь полезный AI-инструмент, которого нет в каталоге? Расскажи нам.',
+  ru: { catalog:'Каталог', community:'Лента', messages:'Сообщения', top:'Рейтинг', h:'Предложи <em>сервис.</em>', sub:'Знаешь полезный AI-инструмент, которого нет в каталоге? Расскажи нам.',
     signTitle:'Нужен аккаунт', signText:'Войди или создай бесплатный аккаунт, чтобы отправить предложение.', signLink:'Войти или зарегистрироваться',
     name:'Название сервиса', url:'Ссылка на официальный сайт', cat:'Категория', note:'Чем он полезен? (необязательно)', send:'Отправить', busy:'Отправляем…',
     ok:'Спасибо! Предложение отправлено на рассмотрение.', fail:'Не удалось отправить. Проверь правила Firestore.', badUrl:'Укажи ссылку, начинающуюся с http:// или https://',
     sideTitle:'Что дальше?', sideText:'Мы проверяем каждое предложение вручную: смотрим, что сервис работает, и уточняем условия бесплатного плана перед добавлением.',
     cats:{text:'Текст и чат',image:'Изображения',video:'Видео и аудио',code:'Код',work:'Продуктивность'} },
-  en: { catalog:'Directory', community:'Feed', messages:'Messages', h:'Suggest a <em>tool.</em>', sub:'Know a useful AI tool that is missing from the directory? Tell us.',
+  en: { catalog:'Directory', community:'Feed', messages:'Messages', top:'Leaderboard', h:'Suggest a <em>tool.</em>', sub:'Know a useful AI tool that is missing from the directory? Tell us.',
     signTitle:'Account required', signText:'Log in or create a free account to send a suggestion.', signLink:'Log in or sign up',
     name:'Tool name', url:'Official website link', cat:'Category', note:'Why is it useful? (optional)', send:'Submit', busy:'Sending…',
     ok:'Thanks! Your suggestion was sent for review.', fail:'Could not send. Check Firestore rules.', badUrl:'Enter a link starting with http:// or https://',
@@ -20,7 +20,7 @@ const t = k => TXT[lang][k];
 function paint() {
   document.documentElement.lang = lang;
   $('#language').textContent = lang === 'ru' ? 'EN' : 'RU';
-  $('#navCatalog').textContent = t('catalog'); $('#navCommunity').textContent = t('community'); $('#navMsg').textContent = t('messages');
+  $('#navCatalog').textContent = t('catalog'); $('#navCommunity').textContent = t('community'); $('#navMsg').textContent = t('messages'); $('#navTop').textContent = t('top');
   $('#h').innerHTML = t('h'); $('#sub').textContent = t('sub');
   $('#signTitle').textContent = t('signTitle'); $('#signText').textContent = t('signText'); $('#signLink').textContent = t('signLink');
   $('#lName').textContent = t('name'); $('#lUrl').textContent = t('url'); $('#lCat').textContent = t('cat'); $('#lNote').textContent = t('note');

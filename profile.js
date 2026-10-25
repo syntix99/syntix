@@ -12,7 +12,7 @@ const TXT = {
     saved: 'Профиль сохранён.', fail: 'Не удалось сохранить. Проверь правила Firestore.',
     name: 'Имя', bio: 'О себе', avatar: 'Аватар', chooseAvatar: 'Загрузить фото', removeAvatar: 'Убрать фото',
     badFile: 'Выбери файл изображения.', needName: 'Укажи имя.',
-    settings: 'Настройки', lang: 'Язык интерфейса', showFav: 'Показывать избранное другим пользователям', allowDms: 'Разрешить личные сообщения', writeDm: '✉ Написать', navFeed: 'Лента', navMessages: 'Сообщения',
+    settings: 'Настройки', lang: 'Язык интерфейса', showFav: 'Показывать избранное другим пользователям', allowDms: 'Разрешить личные сообщения', writeDm: '✉ Написать', navFeed: 'Лента', navTop: 'Рейтинг', navMessages: 'Сообщения', ach: 'Достижения', lvl: 'Ур.', xpTo: 'до следующего уровня', achToast: 'Новое достижение: ', sPosts: 'Постов', sComments: 'Комментариев', sLikes: 'Лайков получено', sRatings: 'Оценок', sChannels: 'Каналов', sStreak: 'Серия дней',
     logout: 'Выйти', copy: 'Копировать ссылку', copied: 'Ссылка скопирована',
     favorites: 'Избранное', comments: 'Активность', ratings: 'Оценки', rateEmpty: 'Оценок пока нет. Оцени сервис на его странице.',
     favEmpty: 'В избранном пока пусто. Открой карточку AI-сервиса и нажми «В избранное».',
@@ -33,7 +33,7 @@ const TXT = {
     saved: 'Profile saved.', fail: 'Could not save. Check Firestore rules.',
     name: 'Name', bio: 'About', avatar: 'Avatar', chooseAvatar: 'Upload photo', removeAvatar: 'Remove photo',
     badFile: 'Choose an image file.', needName: 'Enter a name.',
-    settings: 'Settings', lang: 'Interface language', showFav: 'Show my favorites to other users', allowDms: 'Allow direct messages', writeDm: '✉ Message', navFeed: 'Feed', navMessages: 'Messages',
+    settings: 'Settings', lang: 'Interface language', showFav: 'Show my favorites to other users', allowDms: 'Allow direct messages', writeDm: '✉ Message', navFeed: 'Feed', navTop: 'Leaderboard', navMessages: 'Messages', ach: 'Achievements', lvl: 'Lv.', xpTo: 'to next level', achToast: 'New achievement: ', sPosts: 'Posts', sComments: 'Comments', sLikes: 'Likes received', sRatings: 'Ratings', sChannels: 'Channels', sStreak: 'Day streak',
     logout: 'Log out', copy: 'Copy link', copied: 'Link copied',
     favorites: 'Favorites', comments: 'Activity', ratings: 'Ratings', rateEmpty: 'No ratings yet. Rate a tool on its page.',
     favEmpty: 'No favorites yet. Open an AI tool page and press “Add to favorites”.',
@@ -94,7 +94,7 @@ function render() {
     ${avatarHtml(p, 'big')}
     <div class="profile-info">
       <small>${t(isOwn ? 'you' : 'public')}</small>
-      <h1>${esc(p.displayName)}</h1>
+      <h1>${esc(p.displayName)}</h1><span class="lvl-badge" id="lvlBadge" style="display:none"></span>
       <p class="profile-bio">${p.bio ? esc(p.bio).replace(/\n/g, '<br>') : esc(t('noBio'))}</p>
       <p class="muted">${t('since')} ${esc(dateText(p.createdAt))}</p>
     </div>
@@ -124,12 +124,14 @@ function render() {
   </form>` : ''}
   <div class="ptabs">
     <button type="button" data-tab="favorites" class="${tab === 'favorites' ? 'active' : ''}">♥ ${t('favorites')}</button>
+    <button type="button" data-tab="ach" class="${tab === 'ach' ? 'active' : ''}">🏆 ${t('ach')}</button>
     <button type="button" data-tab="ratings" class="${tab === 'ratings' ? 'active' : ''}">★ ${t('ratings')}</button>
     <button type="button" data-tab="comments" class="${tab === 'comments' ? 'active' : ''}">✎ ${t('comments')}</button>
   </div>
   <div id="tabBody" class="feed-list"></div>`;
   bind();
   loadTab();
+  ensureGame().then(paintBadge);
 }
 
 function bind() {
@@ -170,6 +172,7 @@ function bind() {
       await db.collection('profiles').doc(uid).update(data);
       try { await me.updateProfile({ displayName }); } catch (err) { console.warn(err); }
       profile = { ...profile, ...data, updatedAt: null };
+      gameUid = null;
       lang = data.lang; localStorage.setItem('syntix-lang', lang);
       paintStatic(); render();
       const m = $('#pMsg'); m.className = 'message ok'; m.textContent = t('saved');
@@ -184,7 +187,7 @@ function bind() {
 async function loadTab() {
   const box = $('#tabBody');
   box.innerHTML = '<div class="detail-panel">…</div>';
-  try { box.innerHTML = tab === 'favorites' ? await favoritesHtml() : tab === 'ratings' ? await ratingsHtml() : await activityHtml(); }
+  try { box.innerHTML = tab === 'favorites' ? await favoritesHtml() : tab === 'ratings' ? await ratingsHtml() : tab === 'ach' ? await achHtml() : await activityHtml(); }
   catch (e) { console.error('Syntix profile tab:', e); box.innerHTML = errBox(e); return; }
   box.querySelectorAll('[data-unfav]').forEach(b => b.onclick = async () => {
     b.disabled = true;
@@ -223,6 +226,40 @@ async function activityHtml() {
       <div class="feed-bottom"><a class="feed-tool" href="${href}">${esc(label || t('open'))} ↗</a></div>
     </article>`;
   }).join('');
+}
+
+let gamePromise = null, gameUid = null;
+function ensureGame() {
+  if (!window.Gamify) return Promise.resolve(null);
+  if (gameUid !== uid) {
+    gameUid = uid;
+    gamePromise = Gamify.loadUser(db, uid, profile).then(g => { announce(g); return g; }).catch(e => { console.warn('gamify', e); return null; });
+  }
+  return gamePromise;
+}
+function paintBadge(g) {
+  const el = $('#lvlBadge');
+  if (!el || !g) return;
+  el.textContent = `${g.info.icon} ${t('lvl')} ${g.info.level} · ${lang === 'ru' ? g.info.ru : g.info.en}`;
+  el.style.display = '';
+}
+function announce(g) {
+  if (!own()) return;
+  const key = 'syntix-ach-' + uid;
+  let seen = null;
+  try { seen = JSON.parse(localStorage.getItem(key) || 'null'); } catch { /* ignore */ }
+  const done = g.ach.filter(a => a.done).map(a => a.id);
+  if (seen && window.toast) done.filter(id => !seen.includes(id)).slice(0, 3).forEach(id => { const a = g.ach.find(x => x.id === id); toast(`🏆 ${t('achToast')}${lang === 'ru' ? a.ru : a.en}`); });
+  try { localStorage.setItem(key, JSON.stringify(done)); } catch { /* ignore */ }
+}
+async function achHtml() {
+  const g = await ensureGame();
+  if (!g) return `<div class="detail-panel"><p>${esc(t('loadError'))}</p></div>`;
+  const i = g.info, s = g.stats, left = Math.max(0, i.next - g.xp);
+  const stats = [[s.p, 'sPosts'], [s.c, 'sComments'], [s.l, 'sLikes'], [s.r, 'sRatings'], [s.ch, 'sChannels'], [g.streak, 'sStreak']];
+  return `<section class="detail-panel lvl-card"><div class="lvl-icon">${i.icon}</div><div class="lvl-main"><small>${t('lvl').toUpperCase()} ${i.level}</small><h2>${esc(lang === 'ru' ? i.ru : i.en)}</h2><div class="xpbar"><i style="width:${i.pct}%"></i></div><p class="muted small" style="margin:8px 0 0">${g.xp} XP · ${left} ${esc(t('xpTo'))}</p></div></section>
+  <div class="stat-grid">${stats.map(([n, k]) => `<div class="stat"><b>${n}</b><span>${esc(t(k))}</span></div>`).join('')}</div>
+  <div class="ach-grid">${g.ach.map(a => `<div class="ach ${a.done ? 'done' : ''}"><div class="ach-ic">${a.icon}</div><div class="ach-tx"><b>${esc(lang === 'ru' ? a.ru : a.en)}</b><p>${esc(lang === 'ru' ? a.dr : a.de)}</p><div class="mini-bar"><i style="width:${Math.round((a.v / a.goal) * 100)}%"></i></div><em>${a.v} / ${a.goal}</em></div></div>`).join('')}</div>`;
 }
 
 async function ratingsHtml() {

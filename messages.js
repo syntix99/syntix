@@ -1,7 +1,7 @@
 (() => {
 const C = window.Syntix, $ = s => document.querySelector(s), esc = C.esc;
 const TXT = {
-  ru: { catalog: 'Каталог', feed: 'Лента', messages: 'Сообщения', login: 'Войти',
+  ru: { catalog: 'Каталог', feed: 'Лента', messages: 'Сообщения', navTop: 'Рейтинг', login: 'Войти',
     noThreads: 'Диалогов пока нет. Открой профиль участника или нажми ✉ под его постом в ленте.',
     pick: 'Выбери диалог слева или начни новый из ленты или профиля участника.',
     ph: 'Напиши сообщение…', send: 'Отправить', you: 'Вы: ', back: '←', newChat: 'Новый диалог',
@@ -9,7 +9,7 @@ const TXT = {
     dmOff: 'Этот пользователь отключил личные сообщения.', self: 'Нельзя написать самому себе.',
     failed: 'Не удалось отправить. Проверь правила Firestore.', loadError: 'Не удалось загрузить сообщения.',
     permHint: ' Опубликуй актуальный firestore.rules (Firebase Console → Firestore → Rules).', startHint: 'Напиши первое сообщение — диалог появится у вас обоих.', today: 'Сегодня' },
-  en: { catalog: 'Directory', feed: 'Feed', messages: 'Messages', login: 'Log in',
+  en: { catalog: 'Directory', feed: 'Feed', messages: 'Messages', navTop: 'Leaderboard', login: 'Log in',
     noThreads: 'No conversations yet. Open a member profile or press ✉ under their post in the feed.',
     pick: 'Pick a conversation on the left, or start a new one from the feed or a profile.',
     ph: 'Write a message…', send: 'Send', you: 'You: ', back: '←', newChat: 'New conversation',

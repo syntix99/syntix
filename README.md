@@ -69,3 +69,10 @@ This package replaces the previous Supabase browser integration with Firebase Au
 - **Feed UI:** avatars, relative time, likes, inline comments, sort (latest/top), search, load-more, tool and channel pills.
 - **Shared helpers:** `core.js` (profiles cache, avatars, time, links). Styles in `social.css`.
 - **Republish `firestore.rules`** — it was rewritten (channels, DMs, new post fields).
+
+## v6 — Leaderboard, levels, achievements
+- **`leaderboard.html`:** top members (week / month / all time, podium + list, "your rank" card) and top tools (Bayesian-weighted average rating). Includes the XP rules and the full achievements catalog.
+- **Levels & achievements (`gamify.js`):** XP = post 10, comment 3, like on your post 2, tool rating 2, own channel 15. 13 achievements (first post, writer, critic, founder, 3/7-day streaks, complete profile…). Shown on every profile (🏆 Achievements tab + level badge); the owner gets a toast when a new one unlocks.
+- **Nothing is stored:** scores are derived from public data (posts, comments, likes, ratings, channels), so they cannot be edited. Anti-abuse: max 5 posts and 10 comments per day count, self-likes are ignored.
+- **Cost:** the leaderboard reads ~2,000 documents per refresh; the result is cached in the browser for 15 minutes. For a large audience move this to a scheduled Cloud Function that writes a `leaderboard` document.
+- No new Firestore rules are needed (only public reads).
