@@ -31,10 +31,18 @@
     return new Date(t).toLocaleDateString(C.ru() ? 'ru-RU' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
-  // text -> safe HTML with clickable links and line breaks
-  C.rich = s => C.esc(s)
-    .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer nofollow">$1</a>')
-    .replace(/\n/g, '<br>');
+  // text -> safe HTML with clickable links, line breaks and (optionally) clickable #hashtags
+  C.rich = (s, o = {}) => {
+    let h = C.esc(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer nofollow">$1</a>').replace(/\n/g, '<br>');
+    if (o.tags) h = h.replace(/(^|[\s>])#([\p{L}\p{N}_]{2,30})/gu, '$1<button type="button" class="tag-link" data-tag="$2">#$2</button>');
+    return h;
+  };
+  C.tags = s => [...String(s || '').matchAll(/(?:^|\s)#([\p{L}\p{N}_]{2,30})/gu)].map(m => m[1].toLowerCase());
+  // inline previews for direct https image links (max 3)
+  C.media = s => {
+    const urls = [...String(s || '').matchAll(/https:\/\/[^\s<]+\.(?:png|jpe?g|gif|webp)(?:\?[^\s<]*)?/gi)].map(m => m[0]).slice(0, 3);
+    return urls.length ? `<div class="media">${urls.map(u => `<a href="${C.esc(u)}" target="_blank" rel="noopener noreferrer nofollow"><img src="${C.esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer"></a>`).join('')}</div>` : '';
+  };
 
   // ---- public profile cache ----
   C.P = new Map();

@@ -76,3 +76,11 @@ This package replaces the previous Supabase browser integration with Firebase Au
 - **Nothing is stored:** scores are derived from public data (posts, comments, likes, ratings, channels), so they cannot be edited. Anti-abuse: max 5 posts and 10 comments per day count, self-likes are ignored.
 - **Cost:** the leaderboard reads ~2,000 documents per refresh; the result is cached in the browser for 15 minutes. For a large audience move this to a scheduled Cloud Function that writes a `leaderboard` document.
 - No new Firestore rules are needed (only public reads).
+
+## v7
+- **Tool finder** on the home page (🎯): pick tasks, get the 4 best matches, optionally weighted by community rating.
+- **Ratings on catalog cards** + sort "По рейтингу" (`ratings.js`, cached 30 min).
+- **Unread DM badge** on the Messages tab/link and in the page title (`badge.js`).
+- **Following:** follow people (profile + feed) and channels; "Подписки" tab in the feed (`profiles/{uid}/following`, private). Republish `firestore.rules`.
+- **Feed:** clickable #hashtags + trending tags row, inline previews for direct https image links, draft autosave, Ctrl/Cmd+Enter to publish.
+- **PWA:** installable on phones (`manifest.webmanifest`, `sw.js`, icons). Network-first, so updates always win.

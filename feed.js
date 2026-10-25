@@ -18,7 +18,7 @@ const TXT = {
     join: 'Подписаться', leave: 'Отписаться', joinedLbl: 'Вы подписаны', deleteChannel: 'Удалить канал', deleteChannelQ: 'Удалить канал? Посты останутся, но канал исчезнет.',
     byOwner: 'Автор', openMode: 'Публиковать может каждый', ownerMode: 'Публикует только владелец', chanShare: 'Поделиться',
     chanNew: 'Новый канал', chanName: 'Название', chanDesc: 'Описание', chanIcon: 'Значок', chanMode: 'Кто может публиковать', chanCreate: 'Создать канал',
-    chanCreated: 'Канал создан', chanLogin: 'Войди в аккаунт, чтобы создать канал.', loadError: 'Не удалось загрузить ленту.',
+    chanCreated: 'Канал создан', scopeAll: 'Все', scopeFollowing: 'Подписки', follow: 'Подписаться', followingLbl: 'Вы подписаны', followEmpty: 'Подпишись на людей и каналы — их посты появятся здесь.', chanLogin: 'Войди в аккаунт, чтобы создать канал.', loadError: 'Не удалось загрузить ленту.',
     permHint: ' Опубликуй актуальный firestore.rules (Firebase Console → Firestore → Rules).', posts: 'постов', anonymous: 'Участник Syntix'
   },
   en: {
@@ -38,7 +38,7 @@ const TXT = {
     join: 'Follow', leave: 'Unfollow', joinedLbl: 'Following', deleteChannel: 'Delete channel', deleteChannelQ: 'Delete this channel? Posts stay, the channel disappears.',
     byOwner: 'By', openMode: 'Anyone can post', ownerMode: 'Owner-only posting', chanShare: 'Share',
     chanNew: 'New channel', chanName: 'Name', chanDesc: 'Description', chanIcon: 'Icon', chanMode: 'Who can post', chanCreate: 'Create channel',
-    chanCreated: 'Channel created', chanLogin: 'Sign in to create a channel.', loadError: 'Could not load the feed.',
+    chanCreated: 'Channel created', scopeAll: 'All', scopeFollowing: 'Following', follow: 'Follow', followingLbl: 'Following', followEmpty: 'Follow people and channels — their posts will show up here.', chanLogin: 'Sign in to create a channel.', loadError: 'Could not load the feed.',
     permHint: ' Publish the latest firestore.rules (Firebase Console → Firestore → Rules).', posts: 'posts', anonymous: 'Syntix member'
   }
 };
@@ -47,7 +47,7 @@ const t = k => (TXT[lang] && TXT[lang][k]) ?? TXT.ru[k] ?? k;
 const PAGE = 20, ICONS = ['💬', '🚀', '🎨', '💻', '🎬', '🎵', '📚', '🧠', '⚡', '🔥', '🌍', '🛠️'];
 
 let db, me = null, channels = [], joined = new Set(), cur = '', posts = [], lastDoc = null, hasMore = false;
-let sortMode = 'new', query = '', open = new Set(), likes = {}, comments = {}, loading = false, booted = false, pickedIcon = ICONS[0], tools = [];
+let sortMode = 'new', query = '', open = new Set(), likes = {}, comments = {}, loading = false, booted = false, pickedIcon = ICONS[0], tools = [], following = new Set(), scope = 'all';
 
 const myName = () => (C.name(me.uid, me.displayName || (me.email || '').split('@')[0]) || t('anonymous')).slice(0, 60);
 const chanById = id => channels.find(c => c.id === id);
@@ -77,8 +77,9 @@ async function loadChannels() {
   }
 }
 async function loadJoined() {
-  joined = new Set();
+  joined = new Set(); following = new Set();
   if (!me) return;
+  try { (await db.collection('profiles').doc(me.uid).collection('following').get()).forEach(d => following.add(d.id)); } catch (e) { console.warn('following', e); }
   try { (await db.collection('profiles').doc(me.uid).collection('joined').get()).forEach(d => joined.add(d.id)); } catch (e) { console.warn('joined', e); }
 }
 async function loadExtras(ids) {
@@ -105,7 +106,14 @@ async function loadPosts(reset) {
   if (reset) { posts = []; lastDoc = null; hasMore = false; $('#feed').innerHTML = skeleton(); $('#more').style.display = 'none'; }
   try {
     let docs;
-    if (cur === '') {
+    if (cur === '' && scope === 'following') {
+      const seen = new Map(), jobs = [], us = [...following], cs = [...joined];
+      for (let i = 0; i < us.length; i += 10) jobs.push(db.collection('community_posts').where('uid', 'in', us.slice(i, i + 10)).limit(40).get());
+      for (let i = 0; i < cs.length; i += 10) jobs.push(db.collection('community_posts').where('channelId', 'in', cs.slice(i, i + 10)).limit(40).get());
+      (await Promise.all(jobs)).forEach(sn => sn.docs.forEach(d => seen.set(d.id, d)));
+      docs = [...seen.values()];
+      hasMore = false;
+    } else if (cur === '') {
       let qy = db.collection('community_posts').orderBy('createdAt', 'desc').limit(PAGE);
       if (lastDoc) qy = qy.startAfter(lastDoc);
       docs = (await qy.get()).docs;
@@ -116,7 +124,7 @@ async function loadPosts(reset) {
       hasMore = false;
     }
     const fresh = docs.map(d => ({ id: d.id, ...d.data() }));
-    if (cur !== '') fresh.sort((a, b) => C.ms(b.createdAt) - C.ms(a.createdAt));
+    if (cur !== '' || scope === 'following') fresh.sort((a, b) => C.ms(b.createdAt) - C.ms(a.createdAt));
     posts = posts.concat(fresh);
     await Promise.all([C.loadProfiles(fresh.map(p => p.uid)), loadExtras(fresh.map(p => p.id))]);
   } catch (e) {
@@ -165,7 +173,7 @@ function renderComposer() {
 }
 function commentHtml(c) {
   const name = C.name(c.uid, c.authorName), own = me && c.uid === me.uid;
-  return `<div class="cm" id="c-${esc(c.id)}"><a href="./profile.html?uid=${encodeURIComponent(c.uid)}">${C.avatar(c.uid, name, 'xs')}</a><div class="cm-body"><div class="cm-head"><a class="author-link" href="./profile.html?uid=${encodeURIComponent(c.uid)}">${esc(name)}</a><span class="when">${esc(C.ago(c.createdAt))}</span>${me && !own ? `<button class="linkbtn" type="button" data-report="community_comments" data-id="${esc(c.id)}">${esc(t('report'))}</button>` : ''}${own ? `<button class="linkbtn" type="button" data-del="community_comments" data-id="${esc(c.id)}" data-post="${esc(c.postId)}">${esc(t('del'))}</button>` : ''}</div><p>${C.rich(c.body)}</p></div></div>`;
+  return `<div class="cm" id="c-${esc(c.id)}"><a href="./profile.html?uid=${encodeURIComponent(c.uid)}">${C.avatar(c.uid, name, 'xs')}</a><div class="cm-body"><div class="cm-head"><a class="author-link" href="./profile.html?uid=${encodeURIComponent(c.uid)}">${esc(name)}</a><span class="when">${esc(C.ago(c.createdAt))}</span>${me && !own ? `<button class="linkbtn" type="button" data-report="community_comments" data-id="${esc(c.id)}">${esc(t('report'))}</button>` : ''}${own ? `<button class="linkbtn" type="button" data-del="community_comments" data-id="${esc(c.id)}" data-post="${esc(c.postId)}">${esc(t('del'))}</button>` : ''}</div><p>${C.rich(c.body, { tags: true })}</p></div></div>`;
 }
 function threadHtml(p) {
   const cm = comments[p.id] || [];
@@ -175,24 +183,52 @@ function postHtml(p) {
   const ch = chanById(p.channelId), name = C.name(p.uid, p.authorName), L = likes[p.id] || { n: 0, mine: false }, cm = comments[p.id] || [];
   const own = me && p.uid === me.uid, canDel = me && (own || (ch && ch.ownerUid === me.uid));
   const href = `./profile.html?uid=${encodeURIComponent(p.uid)}`;
-  return `<article class="post" id="post-${esc(p.id)}"><header class="post-head"><a href="${href}">${C.avatar(p.uid, name, 'md')}</a><div class="post-who"><a class="author-link" href="${href}">${esc(name)}</a><span class="when" title="${esc(p.createdAt?.toDate ? p.createdAt.toDate().toLocaleString() : '')}">${esc(C.ago(p.createdAt))}</span></div>${ch && cur === '' ? `<button type="button" class="pill chpill" data-ch="${esc(ch.id)}">${esc((ch.icon || '💬') + ' ' + ch.name)}</button>` : ''}</header>${p.title ? `<h3 class="post-title">${esc(p.title)}</h3>` : ''}<p class="post-body">${C.rich(p.body)}</p>${p.toolName ? `<a class="pill tool" href="./tool.html?id=${encodeURIComponent(C.slug(p.toolName))}">✦ ${esc(p.toolName)}</a>` : ''}<footer class="post-actions"><button type="button" class="act like ${L.mine ? 'on' : ''}" data-like="${esc(p.id)}" aria-pressed="${L.mine}" title="${esc(t('like'))}">${L.mine ? '♥' : '♡'} <b>${L.n}</b></button><button type="button" class="act" data-toggle="${esc(p.id)}">💬 <b>${cm.length}</b></button><button type="button" class="act" data-share="${esc(p.id)}" title="${esc(t('share'))}">↗</button>${me && !own ? `<a class="act" href="./messages.html?to=${encodeURIComponent(p.uid)}" title="${esc(t('writeDm'))}">✉</a>` : ''}<span class="grow"></span>${me && !own ? `<button type="button" class="act quiet" data-report="community_posts" data-id="${esc(p.id)}">${esc(t('report'))}</button>` : ''}${canDel ? `<button type="button" class="act quiet" data-del="community_posts" data-id="${esc(p.id)}">${esc(t('del'))}</button>` : ''}</footer>${open.has(p.id) ? threadHtml(p) : ''}</article>`;
+  return `<article class="post" id="post-${esc(p.id)}"><header class="post-head"><a href="${href}">${C.avatar(p.uid, name, 'md')}</a><div class="post-who"><a class="author-link" href="${href}">${esc(name)}</a><span class="when" title="${esc(p.createdAt?.toDate ? p.createdAt.toDate().toLocaleString() : '')}">${esc(C.ago(p.createdAt))}</span></div>${me && !own ? followBtn(p.uid) : ''}${ch && cur === '' ? `<button type="button" class="pill chpill" data-ch="${esc(ch.id)}">${esc((ch.icon || '💬') + ' ' + ch.name)}</button>` : ''}</header>${p.title ? `<h3 class="post-title">${esc(p.title)}</h3>` : ''}<p class="post-body">${C.rich(p.body, { tags: true })}</p>${C.media(p.body)}${p.toolName ? `<a class="pill tool" href="./tool.html?id=${encodeURIComponent(C.slug(p.toolName))}">✦ ${esc(p.toolName)}</a>` : ''}<footer class="post-actions"><button type="button" class="act like ${L.mine ? 'on' : ''}" data-like="${esc(p.id)}" aria-pressed="${L.mine}" title="${esc(t('like'))}">${L.mine ? '♥' : '♡'} <b>${L.n}</b></button><button type="button" class="act" data-toggle="${esc(p.id)}">💬 <b>${cm.length}</b></button><button type="button" class="act" data-share="${esc(p.id)}" title="${esc(t('share'))}">↗</button>${me && !own ? `<a class="act" href="./messages.html?to=${encodeURIComponent(p.uid)}" title="${esc(t('writeDm'))}">✉</a>` : ''}<span class="grow"></span>${me && !own ? `<button type="button" class="act quiet" data-report="community_posts" data-id="${esc(p.id)}">${esc(t('report'))}</button>` : ''}${canDel ? `<button type="button" class="act quiet" data-del="community_posts" data-id="${esc(p.id)}">${esc(t('del'))}</button>` : ''}</footer>${open.has(p.id) ? threadHtml(p) : ''}</article>`;
 }
 function renderFeed() {
   const ql = query.trim().toLowerCase();
   let list = posts.filter(p => !ql || [p.title, p.body, p.authorName, p.toolName, C.name(p.uid, p.authorName)].join(' ').toLowerCase().includes(ql));
   if (sortMode === 'top') list = [...list].sort((a, b) => ((likes[b.id]?.n || 0) * 2 + (comments[b.id]?.length || 0)) - ((likes[a.id]?.n || 0) * 2 + (comments[a.id]?.length || 0)) || C.ms(b.createdAt) - C.ms(a.createdAt));
-  $('#feed').innerHTML = list.length ? list.map(postHtml).join('') : `<div class="empty-state"><div class="big">${ql ? '🔍' : '✨'}</div><p>${esc(ql ? t('emptySearch') : cur ? t('emptyChan') : t('empty'))}</p></div>`;
+  $('#feed').innerHTML = list.length ? list.map(postHtml).join('') : `<div class="empty-state"><div class="big">${ql ? '🔍' : '✨'}</div><p>${esc(ql ? t('emptySearch') : cur ? t('emptyChan') : scope === 'following' ? t('followEmpty') : t('empty'))}</p></div>`;
   $('#more').style.display = hasMore && !ql ? '' : 'none';
+  renderTags();
 }
 function repaintPost(id) {
   const p = posts.find(x => x.id === id), el = document.getElementById('post-' + id);
   if (p && el) el.outerHTML = postHtml(p);
 }
-function paintAll() { paintStatic(); renderChannels(); renderBanner(); renderComposer(); }
+const followBtn = uid => `<button type="button" class="follow-btn ${following.has(uid) ? 'on' : ''}" data-follow="${esc(uid)}">${following.has(uid) ? '✓ ' + esc(t('followingLbl')) : '＋ ' + esc(t('follow'))}</button>`;
+function renderTags() {
+  const m = new Map();
+  posts.forEach(p => new Set(C.tags((p.title || '') + ' ' + p.body)).forEach(g => m.set(g, (m.get(g) || 0) + 1)));
+  const top = [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 8);
+  const active = query.startsWith('#') ? query.slice(1).toLowerCase() : '';
+  $('#tagRow').innerHTML = top.map(([g, n]) => `<button type="button" class="tag-chip ${g === active ? 'on' : ''}" data-tag="${esc(g)}">#${esc(g)} <i>${n}</i></button>`).join('') + (active ? '<button type="button" class="tag-chip" data-tag="">✕</button>' : '');
+}
+function syncScope() {
+  if (!me) scope = 'all';
+  $('#scopePills').style.display = me && cur === '' ? '' : 'none';
+  document.querySelectorAll('[data-scope]').forEach(b => b.classList.toggle('active', b.dataset.scope === scope));
+}
+async function toggleFollow(uid) {
+  const ref = db.collection('profiles').doc(me.uid).collection('following').doc(uid);
+  try {
+    if (following.has(uid)) { await ref.delete(); following.delete(uid); }
+    else { await ref.set({ uid, createdAt: C.now() }); following.add(uid); }
+  } catch (e) { console.error(e); C.toast(t('failed')); return; }
+  if (scope === 'following' && !following.has(uid)) loadPosts(true); else renderFeed();
+}
+const DRAFT = 'syntix-draft';
+function saveDraft() { try { localStorage.setItem(DRAFT, JSON.stringify({ t: $('#cTitle').value, b: $('#cBody').value })); } catch { /* ignore */ } }
+function restoreDraft() {
+  try { const d = JSON.parse(localStorage.getItem(DRAFT) || 'null'); if (d) { $('#cTitle').value = d.t || ''; $('#cBody').value = d.b || ''; $('#cCount').textContent = `${$('#cBody').value.length} / 5000`; } } catch { /* ignore */ }
+}
+
+function paintAll() { paintStatic(); renderChannels(); renderBanner(); renderComposer(); syncScope(); }
 
 /* ---------------- actions ---------------- */
 function selectChannel(id) {
-  cur = id; open.clear();
+  cur = id; open.clear(); scope = 'all';
   history.replaceState(null, '', id ? `?channel=${encodeURIComponent(id)}` : location.pathname);
   renderChannels(); renderBanner(); renderComposer(); loadPosts(true);
 }
@@ -242,6 +278,16 @@ document.addEventListener('click', async e => {
     catch (err) { console.error(err); C.toast(t('failed')); }
     return;
   }
+  if ((b = g('[data-tag]'))) {
+    const tg = b.dataset.tag;
+    query = tg && query.toLowerCase() !== '#' + tg ? '#' + tg : '';
+    $('#search').value = query; renderFeed(); return;
+  }
+  if ((b = g('[data-follow]'))) { toggleFollow(b.dataset.follow); return; }
+  if ((b = g('[data-scope]'))) {
+    if (scope !== b.dataset.scope) { scope = b.dataset.scope; syncScope(); loadPosts(true); }
+    return;
+  }
   if ((b = g('[data-sort]'))) {
     sortMode = b.dataset.sort;
     document.querySelectorAll('[data-sort]').forEach(x => x.classList.toggle('active', x === b));
@@ -280,6 +326,7 @@ document.addEventListener('submit', async e => {
     const btn = $('#cSubmit'); btn.disabled = true; btn.textContent = t('busy');
     try {
       await db.collection('community_posts').add({ title: $('#cTitle').value.trim(), body, toolName: $('#cTool').value, channelId: $('#cChan').value, uid: me.uid, authorName: myName(), createdAt: C.now() });
+      localStorage.removeItem(DRAFT);
       $('#cBody').value = ''; $('#cTitle').value = ''; $('#cTool').value = ''; $('#cCount').textContent = '0 / 5000'; $('#cBody').style.height = '';
       C.toast(t('published'));
       const target = $('#cChan').value; if (target !== cur) selectChannel(target); else loadPosts(true);
@@ -309,7 +356,10 @@ document.addEventListener('submit', async e => {
 });
 
 $('#search').addEventListener('input', e => { query = e.target.value; renderFeed(); });
+$('#cTitle').addEventListener('input', saveDraft);
+$('#cBody').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); $('#composeForm').requestSubmit(); } });
 $('#cBody').addEventListener('input', e => {
+  saveDraft();
   const el = e.target; $('#cCount').textContent = `${el.value.length} / 5000`;
   el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 320) + 'px';
 });
@@ -321,7 +371,7 @@ $('#language').addEventListener('click', () => {
 /* ---------------- boot ---------------- */
 async function boot() {
   try { tools = await (await fetch('./tools.json')).json(); } catch { tools = []; }
-  paintStatic();
+  paintStatic(); restoreDraft();
   try { await loadChannels(); } catch (e) { console.warn('channels', e); channels = []; }
   const want = new URLSearchParams(location.search).get('channel');
   if (want && chanById(want)) cur = want;

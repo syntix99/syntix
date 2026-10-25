@@ -51,6 +51,17 @@ service cloud.firestore {
         allow delete: if isOwner(uid);
       }
 
+      // People this user follows (private to the user; doc id = followed uid)
+      match /following/{target} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && target != uid
+          && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+          && request.resource.data.uid == target
+          && request.resource.data.createdAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+
       // Channels this user follows (private to the user)
       match /joined/{cid} {
         allow read: if isOwner(uid);

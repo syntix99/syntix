@@ -67,8 +67,10 @@
     }
     bar.setAttribute('aria-label', r ? 'Основная навигация' : 'Main navigation');
     bar.innerHTML = items.map(([h, i, label]) => `<a href="./${h}" class="${h === here ? 'on' : ''}"${h === here ? ' aria-current="page"' : ''}><span aria-hidden="true">${i}</span>${label}</a>`).join('');
+    if (window.__applyBadge) window.__applyBadge();
   }
 
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('./sw.js').catch(() => {});
   skipLink();
   tabbar();
 })();

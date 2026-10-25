@@ -12,7 +12,7 @@ const TXT = {
     saved: 'Профиль сохранён.', fail: 'Не удалось сохранить. Проверь правила Firestore.',
     name: 'Имя', bio: 'О себе', avatar: 'Аватар', chooseAvatar: 'Загрузить фото', removeAvatar: 'Убрать фото',
     badFile: 'Выбери файл изображения.', needName: 'Укажи имя.',
-    settings: 'Настройки', lang: 'Язык интерфейса', showFav: 'Показывать избранное другим пользователям', allowDms: 'Разрешить личные сообщения', writeDm: '✉ Написать', navFeed: 'Лента', navTop: 'Рейтинг', navMessages: 'Сообщения', ach: 'Достижения', lvl: 'Ур.', xpTo: 'до следующего уровня', achToast: 'Новое достижение: ', sPosts: 'Постов', sComments: 'Комментариев', sLikes: 'Лайков получено', sRatings: 'Оценок', sChannels: 'Каналов', sStreak: 'Серия дней',
+    settings: 'Настройки', lang: 'Язык интерфейса', showFav: 'Показывать избранное другим пользователям', allowDms: 'Разрешить личные сообщения', follow: '＋ Подписаться', unfollow: '✓ Вы подписаны', writeDm: '✉ Написать', navFeed: 'Лента', navTop: 'Рейтинг', navMessages: 'Сообщения', ach: 'Достижения', lvl: 'Ур.', xpTo: 'до следующего уровня', achToast: 'Новое достижение: ', sPosts: 'Постов', sComments: 'Комментариев', sLikes: 'Лайков получено', sRatings: 'Оценок', sChannels: 'Каналов', sStreak: 'Серия дней',
     logout: 'Выйти', copy: 'Копировать ссылку', copied: 'Ссылка скопирована',
     favorites: 'Избранное', comments: 'Активность', ratings: 'Оценки', rateEmpty: 'Оценок пока нет. Оцени сервис на его странице.',
     favEmpty: 'В избранном пока пусто. Открой карточку AI-сервиса и нажми «В избранное».',
@@ -33,7 +33,7 @@ const TXT = {
     saved: 'Profile saved.', fail: 'Could not save. Check Firestore rules.',
     name: 'Name', bio: 'About', avatar: 'Avatar', chooseAvatar: 'Upload photo', removeAvatar: 'Remove photo',
     badFile: 'Choose an image file.', needName: 'Enter a name.',
-    settings: 'Settings', lang: 'Interface language', showFav: 'Show my favorites to other users', allowDms: 'Allow direct messages', writeDm: '✉ Message', navFeed: 'Feed', navTop: 'Leaderboard', navMessages: 'Messages', ach: 'Achievements', lvl: 'Lv.', xpTo: 'to next level', achToast: 'New achievement: ', sPosts: 'Posts', sComments: 'Comments', sLikes: 'Likes received', sRatings: 'Ratings', sChannels: 'Channels', sStreak: 'Day streak',
+    settings: 'Settings', lang: 'Interface language', showFav: 'Show my favorites to other users', allowDms: 'Allow direct messages', follow: '＋ Follow', unfollow: '✓ Following', writeDm: '✉ Message', navFeed: 'Feed', navTop: 'Leaderboard', navMessages: 'Messages', ach: 'Achievements', lvl: 'Lv.', xpTo: 'to next level', achToast: 'New achievement: ', sPosts: 'Posts', sComments: 'Comments', sLikes: 'Likes received', sRatings: 'Ratings', sChannels: 'Channels', sStreak: 'Day streak',
     logout: 'Log out', copy: 'Copy link', copied: 'Link copied',
     favorites: 'Favorites', comments: 'Activity', ratings: 'Ratings', rateEmpty: 'No ratings yet. Rate a tool on its page.',
     favEmpty: 'No favorites yet. Open an AI tool page and press “Add to favorites”.',
@@ -99,7 +99,7 @@ function render() {
       <p class="muted">${t('since')} ${esc(dateText(p.createdAt))}</p>
     </div>
     <div class="profile-actions">
-      ${!isOwn && p.allowDms !== false ? `<a class="btn primary" href="./messages.html?to=${encodeURIComponent(uid)}">${t('writeDm')}</a>` : ''}<button class="btn ghost" id="copyBtn" type="button" data-link="${esc(link)}">${t('copy')}</button>
+      ${!isOwn && me ? '<button class="btn primary" id="followBtn" type="button" style="display:none"></button>' : ''}${!isOwn && p.allowDms !== false ? `<a class="btn primary" href="./messages.html?to=${encodeURIComponent(uid)}">${t('writeDm')}</a>` : ''}<button class="btn ghost" id="copyBtn" type="button" data-link="${esc(link)}">${t('copy')}</button>
       ${isOwn ? `<button class="btn ghost" id="editBtn" type="button">${t('edit')}</button><button class="btn ghost" id="logoutBtn" type="button">${t('logout')}</button>` : ''}
     </div>
   </section>
@@ -134,11 +134,32 @@ function render() {
   ensureGame().then(paintBadge);
 }
 
+function paintFollow(btn, on) {
+  btn.dataset.on = on ? '1' : '';
+  btn.textContent = on ? t('unfollow') : t('follow');
+  btn.className = 'btn ' + (on ? 'ghost' : 'primary');
+  btn.style.display = '';
+}
+async function loadFollow(btn) {
+  const ref = db.collection('profiles').doc(me.uid).collection('following').doc(uid);
+  try { paintFollow(btn, (await ref.get()).exists); } catch (e) { console.warn('follow', e); paintFollow(btn, false); }
+  btn.onclick = async () => {
+    btn.disabled = true;
+    try {
+      if (btn.dataset.on) { await ref.delete(); paintFollow(btn, false); }
+      else { await ref.set({ uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); paintFollow(btn, true); }
+    } catch (e) { console.error(e); if (window.toast) toast(t('fail')); }
+    btn.disabled = false;
+  };
+}
+
 function bind() {
   $('#copyBtn').onclick = async e => {
     try { await navigator.clipboard.writeText(e.currentTarget.dataset.link); e.currentTarget.textContent = t('copied'); } catch { prompt('', e.currentTarget.dataset.link); }
   };
   document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); });
+  const fb = $('#followBtn');
+  if (fb) loadFollow(fb);
   if (!own()) return;
   const form = $('#editForm');
   pendingAvatar = undefined;

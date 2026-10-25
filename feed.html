@@ -1,14 +1,14 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090b13">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090b13"><link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./apple-touch-icon.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="Лента Syntix: каналы, посты, обсуждения AI-инструментов и личные сообщения.">
 <title>Лента — Syntix</title>
 <link rel="stylesheet" href="./styles.css"><link rel="stylesheet" href="./profile.css"><link rel="stylesheet" href="./social.css">
 <script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script defer src="./config.js"></script><script defer src="./core.js"></script><script defer src="./nav-auth.js"></script><script defer src="./feed.js"></script><script defer src="./ui.js"></script>
+<script defer src="./config.js"></script><script defer src="./core.js"></script><script defer src="./nav-auth.js"></script><script defer src="./feed.js"></script><script defer src="./badge.js"></script><script defer src="./ui.js"></script>
 </head>
 <body><div class="glow g1"></div><div class="glow g2"></div>
 <header class="wrap top"><a class="brand" href="./index.html"><b>S</b> syntix<span>.</span></a><nav><a href="./index.html#catalog" data-i="catalog">Каталог</a><a href="./feed.html" data-i="feed">Лента</a><a href="./leaderboard.html" data-i="navTop">Рейтинг</a><a href="./messages.html" data-i="messages">Сообщения</a></nav><div class="actions"><button id="language" type="button">EN</button><a class="btn ghost" href="./account.html" data-i="login">Войти</a></div></header>
@@ -46,10 +46,12 @@
     <div id="blockedNote" class="notice" style="display:none" data-i="blocked">Публиковать в этом канале может только его владелец.</div>
 
     <div class="feed-controls">
+      <div class="pills" id="scopePills" style="display:none"><button type="button" class="pill-btn active" data-scope="all" data-i="scopeAll">Все</button><button type="button" class="pill-btn" data-scope="following" data-i="scopeFollowing">Подписки</button></div>
       <div class="pills"><button type="button" class="pill-btn active" data-sort="new" data-i="sortNew">Новые</button><button type="button" class="pill-btn" data-sort="top" data-i="sortTop">Популярные</button></div>
       <label class="feed-search"><span>⌕</span><input id="search" type="search" data-ph="search" autocomplete="off"></label>
     </div>
 
+    <div id="tagRow" class="tag-row"></div>
     <div id="feed" class="posts"></div>
     <div class="more-wrap"><button type="button" id="more" class="btn ghost" style="display:none" data-i="loadMore">Показать ещё</button></div>
   </section>

@@ -53,7 +53,7 @@ function renderThreads() {
 function markRead() {
   if (!cur) return;
   const th = threads.find(x => x.id === cur.tid);
-  if (th) { localStorage.setItem(readKey(cur.tid), String(Math.max(C.ms(th.lastAt), Date.now()))); renderThreads(); }
+  if (th) { localStorage.setItem(readKey(cur.tid), String(Math.max(C.ms(th.lastAt), Date.now()))); window.dispatchEvent(new Event('syntix-dm-read')); renderThreads(); }
 }
 
 function renderShell() {
