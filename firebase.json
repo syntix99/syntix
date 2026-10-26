@@ -58,7 +58,7 @@ const errBox = e => {
   return `<div class="notice">${esc(t('loadError'))}${code === 'permission-denied' ? esc(t('permHint')) : ''}<div class="muted small">${esc(code)}</div></div>`;
 };
 
-/* ---------------- static text ---------------- */
+// ---------------- static text ----------------
 function paintStatic() {
   document.documentElement.lang = lang;
   document.querySelectorAll('[data-i]').forEach(e => { const v = TXT[lang][e.dataset.i]; if (v !== undefined) e.textContent = v; });
@@ -69,13 +69,13 @@ function paintStatic() {
   $('#cTool').innerHTML = `<option value="">${esc(t('toolNone'))}</option>` + tools.map(x => `<option value="${esc(x[0])}">${esc(x[0])}</option>`).join('');
 }
 
-/* ---------------- data ---------------- */
+// ---------------- data ----------------
 async function loadChannels() {
   const snap = await db.collection('channels').orderBy('createdAt', 'desc').limit(60).get();
   channels = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   const want = new URLSearchParams(location.search).get('channel');
   if (want && !chanById(want)) {
-    try { const d = await db.collection('channels').doc(want).get(); if (d.exists) channels.push({ id: d.id, ...d.data() }); } catch { /* ignore */ }
+    try { const d = await db.collection('channels').doc(want).get(); if (d.exists) channels.push({ id: d.id, ...d.data() }); } catch {  }
   }
 }
 async function loadJoined() {
@@ -147,7 +147,7 @@ async function reloadComments(postId) {
   repaintPost(postId);
 }
 
-/* ---------------- render ---------------- */
+// ---------------- render ----------------
 const skeleton = () => [1, 2, 3].map(() => '<div class="post skel"><div class="sk a"></div><div class="sk b"></div><div class="sk c"></div></div>').join('');
 
 function renderChannels() {
@@ -224,14 +224,14 @@ async function toggleFollow(uid) {
   if (scope === 'following' && !following.has(uid)) loadPosts(true); else renderFeed();
 }
 const DRAFT = 'syntix-draft';
-function saveDraft() { try { localStorage.setItem(DRAFT, JSON.stringify({ t: $('#cTitle').value, b: $('#cBody').value })); } catch { /* ignore */ } }
+function saveDraft() { try { localStorage.setItem(DRAFT, JSON.stringify({ t: $('#cTitle').value, b: $('#cBody').value })); } catch {  } }
 function restoreDraft() {
-  try { const d = JSON.parse(localStorage.getItem(DRAFT) || 'null'); if (d) { $('#cTitle').value = d.t || ''; $('#cBody').value = d.b || ''; $('#cCount').textContent = `${$('#cBody').value.length} / 5000`; } } catch { /* ignore */ }
+  try { const d = JSON.parse(localStorage.getItem(DRAFT) || 'null'); if (d) { $('#cTitle').value = d.t || ''; $('#cBody').value = d.b || ''; $('#cCount').textContent = `${$('#cBody').value.length} / 5000`; } } catch {  }
 }
 
 function paintAll() { paintStatic(); renderChannels(); renderBanner(); renderComposer(); syncScope(); }
 
-/* ---------------- actions ---------------- */
+// ---------------- actions ----------------
 function selectChannel(id) {
   cur = id; open.clear(); scope = 'all';
   history.replaceState(null, '', id ? `?channel=${encodeURIComponent(id)}` : location.pathname);
@@ -364,7 +364,7 @@ document.addEventListener('submit', async e => {
     const btn = $('#chSubmit'); btn.disabled = true;
     try {
       const ref = await db.collection('channels').add({ name: $('#chName').value.trim(), desc: $('#chDesc').value.trim(), icon: pickedIcon, mode: $('#chMode').value, ownerUid: me.uid, ownerName: myName(), createdAt: C.now() });
-      try { await db.collection('profiles').doc(me.uid).collection('joined').doc(ref.id).set({ cid: ref.id, joinedAt: C.now() }); joined.add(ref.id); } catch { /* optional */ }
+      try { await db.collection('profiles').doc(me.uid).collection('joined').doc(ref.id).set({ cid: ref.id, joinedAt: C.now() }); joined.add(ref.id); } catch {  }
       f.reset(); $('#chanDlg').close();
       await loadChannels(); C.toast(t('chanCreated')); selectChannel(ref.id);
     } catch (err) { console.error('Syntix channel:', err); $('#chMsg').className = 'message error'; $('#chMsg').textContent = t('failed'); }
@@ -387,7 +387,7 @@ $('#language').addEventListener('click', () => {
 
 window.addEventListener('syntix-premium', () => { if (booted) { renderComposer(); renderFeed(); } });
 
-/* ---------------- boot ---------------- */
+// ---------------- boot ----------------
 async function boot() {
   try { tools = await (await fetch('./tools.json')).json(); } catch { tools = []; }
   paintStatic(); restoreDraft();

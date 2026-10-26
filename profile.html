@@ -1,4 +1,4 @@
-/* Syntix profiles & shared extras — extends styles.css, uses its tokens */
+
 .profile-page{display:grid;gap:18px;padding-top:30px;padding-bottom:64px}
 .profile-card{display:flex;flex-wrap:wrap;align-items:center;gap:22px;padding:26px;border-radius:20px;background:radial-gradient(ellipse at 8% 10%,#9375ff16,transparent 44%),linear-gradient(145deg,#141827ed,#0e111cee)}
 .profile-info{flex:1 1 260px;min-width:0}
@@ -37,7 +37,6 @@ a.tag:hover{color:#cbbdff;border-color:#9279ff66}
 .resetrow{text-align:center;margin:14px 0 0}
 @media(max-width:560px){.profile-card{padding:20px}.profile-avatar.big{width:76px;height:76px;font-size:30px}}
 
-/* ---- v3: compare drawer, ratings, toasts, a11y ---- */
 .cardbtns{display:flex;gap:6px}
 .cmpbtn{width:30px;height:30px;padding:0;font-size:15px;color:#9da2b8}
 .cmpbtn.on{color:#83efdc;border-color:#65e5d155;background:#65e5d111}
@@ -72,7 +71,6 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .likebtn.on{color:#ff9ecb}
 .rating-stars{color:#ffd29d;letter-spacing:2px;margin:0 0 6px}
 
-/* ---- mobile: bottom tab bar (top nav is hidden by styles.css below 560px) ---- */
 .tabbar{display:none}
 button,a{touch-action:manipulation}
 @media(max-width:560px){
@@ -90,7 +88,6 @@ button,a{touch-action:manipulation}
   .ptabs button{flex:none}
 }
 
-/* ---- levels & achievements ---- */
 .lvl-badge{display:inline-flex;align-items:center;gap:6px;margin:0 0 8px;padding:5px 11px;border:1px solid #ffb15b44;border-radius:999px;background:#ffb15b12;color:#ffd29d;font-size:11px;font-weight:700}
 .lvlmini{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:#ffb15b14;color:#ffd29d;font-size:10px;font-weight:700;white-space:nowrap}
 .lvl-card{display:flex;align-items:center;gap:20px;background:radial-gradient(ellipse at 0% 0%,#ffb15b1c,transparent 55%),linear-gradient(145deg,#141827ed,#0e111cee)}
@@ -114,7 +111,6 @@ button,a{touch-action:manipulation}
 .ach-tx em{display:block;margin-top:5px;font-size:10px;font-style:normal;color:#8d93ab}
 @media(max-width:560px){.lvl-card{flex-direction:column;align-items:flex-start;gap:14px}.ach-grid{grid-template-columns:1fr}}
 
-/* ---- v7: finder, ratings on cards, badge, hashtags, follow, media ---- */
 .hero-actions{margin-top:18px}
 .card .rt,.fbody .rt{margin-left:auto;font-size:11px;font-weight:700;color:#ffd29d}
 .card .bottom{align-items:center}
@@ -148,7 +144,6 @@ button,a{touch-action:manipulation}
 .media img{width:100%;max-height:340px;object-fit:cover;border-radius:14px;border:1px solid var(--line);background:#0b0e18}
 @media(max-width:560px){.tag-row{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.tag-chip{flex:none}.fbtns{width:100%}.fbtns .btn{flex:1}}
 
-/* ---- v8: Premium ---- */
 .gem{display:inline-block;margin-left:5px;font-size:.9em;vertical-align:baseline;filter:drop-shadow(0 0 6px #ffb15b88)}
 .av.prem{box-shadow:0 0 0 2px #090b13,0 0 0 4px #ffb15b,0 0 18px #ffb15b66}
 .gem-badge{color:#ffd29d}
@@ -177,7 +172,7 @@ button,a{touch-action:manipulation}
 .top-post{display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-top:1px solid #ffffff0d;font-size:12px}
 .top-post:first-of-type{border-top:0}
 .top-post b{color:#ff9ecb;white-space:nowrap}
-/* pricing page */
+
 .prem-page{display:grid;gap:34px;padding-top:30px;padding-bottom:80px}
 .prem-hero{text-align:center;display:grid;gap:12px;justify-items:center}
 .prem-hero small{font-size:10px;letter-spacing:1.4px;color:#9da2b8}

@@ -79,9 +79,9 @@ $('#reset').onclick = async () => {
   try {
     if (navigator.serviceWorker) (await navigator.serviceWorker.getRegistrations()).forEach(r => r.unregister());
     if (window.caches) (await caches.keys()).forEach(k => caches.delete(k));
-  } catch (e) { /* ignore */ }
+  } catch (e) {  }
   setTimeout(() => location.reload(), 400);
 };
-$('#copy').onclick = async () => { try { await navigator.clipboard.writeText($('#report').textContent); $('#copy').textContent = 'Скопировано ✓'; } catch { /* ignore */ } };
+$('#copy').onclick = async () => { try { await navigator.clipboard.writeText($('#report').textContent); $('#copy').textContent = 'Скопировано ✓'; } catch {  } };
 window.addEventListener('load', run);
 })();

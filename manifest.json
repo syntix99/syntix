@@ -27,7 +27,7 @@ let db, me = null, data = null, tools = [], tab = 'users', period = 'all', error
 
 const errBox = e => { const code = (e && (e.code || e.message)) || ''; return `<div class="notice">${esc(t('loadError'))}${code === 'permission-denied' ? esc(t('permHint')) : ''}<div class="muted small">${esc(code)}</div></div>`; };
 
-/* ---------- data ---------- */
+// ---------- data ----------
 async function fetchGlobal() {
   let failed = 0, firstErr = null;
   const g = (c, f, n) => db.collection(c).orderBy(f, 'desc').limit(n).get().then(s => s.docs).catch(e => { failed++; firstErr = firstErr || e; console.warn('Syntix lb', c, e); return []; });
@@ -48,13 +48,13 @@ async function fetchGlobal() {
 }
 async function load(force) {
   if (!force) {
-    try { const c = JSON.parse(localStorage.getItem(KEY) || 'null'); if (c && Date.now() - c.t < TTL) { data = c; return; } } catch { /* ignore */ }
+    try { const c = JSON.parse(localStorage.getItem(KEY) || 'null'); if (c && Date.now() - c.t < TTL) { data = c; return; } } catch {  }
   }
   data = await fetchGlobal();
-  try { localStorage.setItem(KEY, JSON.stringify(data)); } catch { /* quota */ }
+  try { localStorage.setItem(KEY, JSON.stringify(data)); } catch {  }
 }
 
-/* ---------- render ---------- */
+// ---------- render ----------
 function paintStatic() {
   document.documentElement.lang = lang;
   document.querySelectorAll('[data-i]').forEach(e => { const v = TXT[lang][e.dataset.i]; if (v !== undefined) e.textContent = v; });
@@ -129,7 +129,7 @@ async function render() {
   if (tab === 'users') await renderUsers(); else renderTools();
 }
 
-/* ---------- events ---------- */
+// ---------- events ----------
 document.addEventListener('click', async e => {
   const b = e.target.closest('[data-tab],[data-period],#refresh');
   if (!b) return;

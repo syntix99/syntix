@@ -1,5 +1,5 @@
-/* Premium entitlements. Source of truth: Firestore `premium/{uid}` = { until: Timestamp, plan }.
-   Clients can only READ it; it is written by the owner (Console) or by the Stripe webhook function. */
+// Premium entitlements. Source of truth: Firestore `premium/{uid}` = { until: Timestamp, plan }.
+// Clients can only READ it; it is written by the owner (Console) or by the Stripe webhook function.
 (() => {
   const P = (window.Premium = { map: new Map(), meActive: false, meDoc: null, ready: false, db: null });
   const cfg = window.SYNTIX_CONFIG?.firebase;

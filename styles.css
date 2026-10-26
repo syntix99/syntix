@@ -1,4 +1,4 @@
-/* Syntix feed, channels and messages — built on styles.css tokens */
+
 .av{display:inline-grid;place-items:center;flex:none;width:36px;height:36px;border-radius:50%;object-fit:cover;color:#fff;font:700 14px var(--display);overflow:hidden}
 .av.md{width:44px;height:44px;font-size:16px}
 .av.xs{width:28px;height:28px;font-size:12px}
@@ -7,7 +7,6 @@
 .pad{padding:8px 12px}
 .notice{padding:14px 16px;border:1px solid #a28aff2e;border-radius:14px;background:#8b72fa10;color:#cfd2e6;font-size:12px}
 
-/* layout */
 .feed-page{display:grid;grid-template-columns:230px minmax(0,1fr) 270px;gap:22px;align-items:start;padding-top:28px;padding-bottom:70px}
 .feed-left,.feed-right{position:sticky;top:18px;display:grid;gap:14px}
 .feed-center{display:grid;gap:16px;min-width:0}
@@ -30,7 +29,6 @@
 .side-link span:first-child{width:20px;text-align:center;color:#b9a8ff}
 .rules{margin:0;padding-left:18px;font-size:11px;line-height:1.7;color:#9da2b8}
 
-/* channel banner */
 .chan-banner{display:flex;flex-wrap:wrap;align-items:center;gap:18px;padding:22px;border:1px solid #a28aff30;border-radius:20px;background:radial-gradient(ellipse at 8% 0%,#9375ff22,transparent 55%),linear-gradient(145deg,#151a2cee,#0e111cf0)}
 .cb-icon{display:grid;place-items:center;width:68px;height:68px;border-radius:20px;font-size:34px;background:#8b72fa1f;border:1px solid #9279ff44}
 .cb-info{flex:1 1 240px;min-width:0}
@@ -40,7 +38,6 @@
 .cb-actions{display:flex;flex-wrap:wrap;gap:8px}
 .btn.danger{color:#ff9aa8;border-color:#ff9aa84d}
 
-/* composer */
 .compose-card{padding:16px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(160deg,#141827f0,#0e111cf5);box-shadow:0 18px 50px #0004}
 .compose-card.sign{text-align:center;padding:24px}
 .compose-card.sign h3{margin:0 0 6px;font:600 20px var(--display)}
@@ -55,7 +52,6 @@
 .counter{margin-left:auto;font-size:10px;color:#7f859c}
 .compose-fields input:focus,.compose-fields textarea:focus,.compose-bar select:focus,.cform input:focus,.dlg-box input:focus,.dlg-box textarea:focus,.dlg-box select:focus,.feed-search input:focus,.dm-form textarea:focus{border-color:#9d80ff99}
 
-/* controls */
 .feed-controls{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
 .pills{display:flex;gap:6px}
 .pill-btn{padding:8px 14px;border-radius:999px;font-size:11px;color:#9da2b8;background:#0f121d;cursor:pointer}
@@ -64,7 +60,6 @@
 .feed-search span{color:#7f859c}
 .feed-search input{border:0;background:transparent;height:38px;padding:0}
 
-/* posts */
 .posts{display:grid;gap:14px}
 .post{position:relative;padding:18px 18px 12px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(160deg,#141827e6,#0e111cf2);transition:border-color .2s,transform .2s,box-shadow .2s}
 .post:hover{border-color:#a28aff44;box-shadow:0 14px 40px #0004}
@@ -100,7 +95,6 @@
 .sk.a{height:14px;width:35%}.sk.b{height:12px;width:92%}.sk.c{height:12px;width:68%}
 @keyframes skl{from{background-position:200% 0}to{background-position:-200% 0}}
 
-/* dialog */
 .dlg{width:min(460px,calc(100% - 24px));padding:0;border:1px solid var(--line);border-radius:20px;background:#0e111c;color:var(--text)}
 .dlg::backdrop{background:#05060bcc}
 .dlg-box{display:grid;gap:14px;padding:20px}
@@ -114,7 +108,6 @@
 .icon-opt{width:40px;height:40px;padding:0;font-size:20px;border-radius:11px;background:#0f121d;cursor:pointer}
 .icon-opt.on{border-color:#9279ff;background:#8b72fa22}
 
-/* messages */
 .dm-page{display:grid;grid-template-columns:330px minmax(0,1fr);gap:18px;height:calc(100vh - 150px);min-height:520px;padding-top:24px;padding-bottom:24px}
 .dm-list,.dm-chat{display:flex;flex-direction:column;min-height:0;border:1px solid var(--line);border-radius:20px;background:linear-gradient(160deg,#141827ee,#0e111cf5);overflow:hidden}
 .dm-list-head{padding:18px 18px 12px}
@@ -143,7 +136,6 @@
 .dm-empty{display:grid;place-items:center;flex:1;padding:30px;text-align:center;color:#9da2b8;font-size:13px}
 .dm-empty .big{font-size:42px;margin-bottom:8px}
 
-/* leaderboard */
 .lb-page{display:grid;gap:18px;padding-top:28px;padding-bottom:70px}
 .lb-hero small{font-size:10px;letter-spacing:1.4px;color:#9da2b8}
 .lb-hero h1{font:600 clamp(34px,5vw,54px)/1.05 var(--display);letter-spacing:-2px;margin:6px 0 8px}
@@ -210,7 +202,7 @@
   .cb-icon{width:54px;height:54px;font-size:28px}
   .cb-actions{width:100%}.cb-actions .btn{flex:1}
   .dlg{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow:auto}
-  /* messages: list page + full-screen chat */
+  
   .dm-page{display:block;height:auto;min-height:calc(100vh - 190px);padding-top:12px;padding-bottom:12px}
   .dm-list{border-radius:18px;min-height:60vh}
   .dm-page .dm-chat{display:none}

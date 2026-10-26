@@ -283,10 +283,10 @@ function announce(g) {
   if (!own()) return;
   const key = 'syntix-ach-' + uid;
   let seen = null;
-  try { seen = JSON.parse(localStorage.getItem(key) || 'null'); } catch { /* ignore */ }
+  try { seen = JSON.parse(localStorage.getItem(key) || 'null'); } catch {  }
   const done = g.ach.filter(a => a.done).map(a => a.id);
   if (seen && window.toast) done.filter(id => !seen.includes(id)).slice(0, 3).forEach(id => { const a = g.ach.find(x => x.id === id); toast(`🏆 ${t('achToast')}${lang === 'ru' ? a.ru : a.en}`); });
-  try { localStorage.setItem(key, JSON.stringify(done)); } catch { /* ignore */ }
+  try { localStorage.setItem(key, JSON.stringify(done)); } catch {  }
 }
 function exportFavs() {
   const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
