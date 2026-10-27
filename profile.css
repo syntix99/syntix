@@ -1,82 +1,149 @@
-(() => {
-const $ = s => document.querySelector(s);
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const CFG = Object.assign({ currency: '€', monthly: { price: '4.99', link: '' }, yearly: { price: '39.99', link: '' }, contact: '' }, window.SYNTIX_PREMIUM || {});
-const TXT = {
-  ru: { cat: 'Каталог', feed: 'Лента', top: 'Рейтинг', msg: 'Сообщения',
-    sub: 'Больше возможностей для тех, кто живёт в AI. Поддержи проект и получи инструменты премиум-класса.',
-    monthly: 'Месяц', yearly: 'Год', perMonth: '/ месяц', perYear: '/ год', save: 'выгода', billedYear: 'Оплата раз в год, экономия', billedMonth: 'Оплата раз в месяц, отмена в любой момент',
-    buy: 'Оформить Premium', extend: 'Продлить Premium', login: 'Войти, чтобы оформить', notCfg: 'Приём платежей ещё не настроен владельцем сайта.', secure: 'Оплата проходит на защищённой странице платёжного сервиса. Данные карты мы не видим и не храним.',
-    active: 'Premium активен до', yourId: 'Твой ID для поддержки:', copy: 'Копировать', copied: 'Скопировано',
-    featTitle: 'Что входит', cmpTitle: 'Free и Premium', thF: 'Возможность', thFree: 'Free', thPrem: '💎 Premium', faqTitle: 'Частые вопросы',
-    feats: [['💎', 'Значок Premium', 'Виден в ленте, профиле и рейтинге.'], ['🎨', 'Свой стиль профиля', 'Акцентный цвет карточки и золотая рамка аватара.'], ['✏️', 'Редактирование постов', 'Исправляй опечатки и дополняй публикации.'], ['📝', 'Длинные посты', 'До 15 000 символов вместо 5 000.'], ['⚖️', 'Сравнение до 6 инструментов', 'Вместо 3 в бесплатной версии.'], ['📈', 'Insights', 'График активности, лучшие часы публикаций и топ твоих постов.'], ['⬇️', 'Экспорт избранного', 'Выгрузка избранных сервисов в CSV.'], ['🏅', 'Достижение «Меценат»', 'Эксклюзивная награда в профиле.']],
-    rows: [['Значок 💎', '—', '✓'], ['Акцентный цвет и рамка аватара', '—', '✓'], ['Редактирование постов', '—', '✓'], ['Длина поста', '5 000', '15 000'], ['Сравнение инструментов', 'до 3', 'до 6'], ['Insights (аналитика)', '—', '✓'], ['Экспорт избранного в CSV', '—', '✓'], ['Достижение «Меценат»', '—', '✓']],
-    faq: [['Как проходит оплата?', 'На защищённой странице платёжного сервиса. Мы не видим и не храним данные карты.'], ['Когда включится Premium?', 'Обычно сразу после подтверждения платежа. Если статус не появился, напиши в поддержку и укажи свой ID (он показан выше).'], ['Как отменить подписку?', 'Через ссылку из письма платёжного сервиса. Доступ сохраняется до конца оплаченного периода.'], ['Что будет после окончания?', 'Твои посты, профиль и достижения останутся. Premium-возможности (редактирование, рамка, Insights и т. д.) отключатся.']],
-    contact: 'Поддержка:' },
-  en: { cat: 'Directory', feed: 'Feed', top: 'Leaderboard', msg: 'Messages',
-    sub: 'More power for people who live in AI. Support the project and get premium-grade tools.',
-    monthly: 'Monthly', yearly: 'Yearly', perMonth: '/ month', perYear: '/ year', save: 'save', billedYear: 'Billed once a year, you save', billedMonth: 'Billed monthly, cancel any time',
-    buy: 'Get Premium', extend: 'Extend Premium', login: 'Sign in to subscribe', notCfg: 'Payments are not configured by the site owner yet.', secure: 'Payment happens on the payment provider’s secure page. We never see or store your card details.',
-    active: 'Premium is active until', yourId: 'Your ID for support:', copy: 'Copy', copied: 'Copied',
-    featTitle: 'What’s included', cmpTitle: 'Free vs Premium', thF: 'Feature', thFree: 'Free', thPrem: '💎 Premium', faqTitle: 'FAQ',
-    feats: [['💎', 'Premium badge', 'Shown in the feed, on your profile and in the leaderboard.'], ['🎨', 'Your own profile style', 'Accent colour for your card and a gold avatar ring.'], ['✏️', 'Edit your posts', 'Fix typos and expand your publications.'], ['📝', 'Long posts', 'Up to 15,000 characters instead of 5,000.'], ['⚖️', 'Compare up to 6 tools', 'Instead of 3 on the free plan.'], ['📈', 'Insights', 'Activity chart, best posting hours and your top posts.'], ['⬇️', 'Export favourites', 'Download your favourite tools as CSV.'], ['🏅', '“Patron” achievement', 'An exclusive award on your profile.']],
-    rows: [['💎 badge', '—', '✓'], ['Accent colour & avatar ring', '—', '✓'], ['Edit posts', '—', '✓'], ['Post length', '5,000', '15,000'], ['Tool comparison', 'up to 3', 'up to 6'], ['Insights (analytics)', '—', '✓'], ['Export favourites to CSV', '—', '✓'], ['“Patron” achievement', '—', '✓']],
-    faq: [['How does payment work?', 'On the payment provider’s secure page. We never see or store card details.'], ['When does Premium turn on?', 'Usually right after the payment is confirmed. If the status does not appear, contact support with your ID (shown above).'], ['How do I cancel?', 'Via the link in the payment provider’s e-mail. Access stays until the end of the paid period.'], ['What happens when it ends?', 'Your posts, profile and achievements stay. Premium perks (editing, ring, Insights, etc.) switch off.']],
-    contact: 'Support:' }
-};
-let lang = localStorage.getItem('syntix-lang') || 'ru', plan = 'yearly', user = null;
-const t = k => TXT[lang][k];
+/* Syntix profiles & shared extras — extends styles.css, uses its tokens */
+.profile-page{display:grid;gap:18px;padding-top:30px;padding-bottom:64px}
+.profile-card{display:flex;flex-wrap:wrap;align-items:center;gap:22px;padding:26px;border-radius:20px;background:radial-gradient(ellipse at 8% 10%,#9375ff16,transparent 44%),linear-gradient(145deg,#141827ed,#0e111cee)}
+.profile-info{flex:1 1 260px;min-width:0}
+.profile-info h1{font:600 clamp(28px,4vw,40px)/1.15 var(--display);letter-spacing:-1.2px;margin:6px 0 4px;overflow-wrap:anywhere}
+.profile-bio{overflow-wrap:anywhere}
+.profile-info .muted{margin:8px 0 0;font-size:11px}
+.profile-actions{display:flex;flex-wrap:wrap;gap:8px}
+.profile-avatar{display:inline-grid;place-items:center;flex:none;width:44px;height:44px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#b6a0ff,#7155f3);color:#fff;font:700 16px var(--display)}
+.profile-avatar.big{width:96px;height:96px;font-size:38px;border:2px solid #a28aff44}
+.profile-edit{display:grid;gap:14px}
+.profile-edit .field{margin:0}
+.profile-edit input:not([type=checkbox]):not([type=file]),.profile-edit textarea,.profile-edit select{width:100%;background:#0b0e18;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:11px 12px;outline:0;font-size:12px;font-family:var(--font)}
+.profile-edit input:not([type=checkbox]):not([type=file]){height:44px;padding:0 12px}
+.profile-edit textarea{resize:vertical}
+.profile-edit input:focus,.profile-edit textarea:focus,.profile-edit select:focus{border-color:#9d80ff99}
+.profile-avatar-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.profile-avatar-row .btn{margin:2px 6px 2px 0}
+.profile-check{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:12px;color:#b6bbce}
+.profile-check input{width:17px;height:17px;accent-color:#9d80ff}
+.ptabs{display:flex;gap:8px;flex-wrap:wrap}
+.ptabs button{color:#9da2b8;background:#0f121d;font-weight:500}
+.ptabs button.active{color:#cbbdff;background:#8b72fa19;border-color:#9279ff66}
+.fav-card{display:flex;gap:15px;align-items:flex-start}
+.fav-text{flex:1;min-width:0}
+.fav-text h3{margin:0 0 4px!important}
+.fav-card .feed-bottom{align-items:center}
+.btn.active{color:#ffb7d6;border-color:#ff9ecb55;background:#ff9ecb12}
+.author-link{color:inherit;font-weight:700}
+.author-link:hover{color:#cbbdff;text-decoration:underline}
+.linkbtn{background:none;border:0;padding:0;margin-left:8px;color:#c1b1ff;font-size:10px;font-weight:600;cursor:pointer}
+.linkbtn:hover{text-decoration:underline;border:0}
+.related{margin-top:34px}
+.related .grid{margin-top:12px}
+.related .card{min-height:150px}
+a.tag:hover{color:#cbbdff;border-color:#9279ff66}
+.resetrow{text-align:center;margin:14px 0 0}
+@media(max-width:560px){.profile-card{padding:20px}.profile-avatar.big{width:76px;height:76px;font-size:30px}}
 
-function paint() {
-  document.documentElement.lang = lang;
-  $('#language').textContent = lang === 'ru' ? 'EN' : 'RU';
-  $('#nCat').textContent = t('cat'); $('#nFeed').textContent = t('feed'); $('#nTop').textContent = t('top'); $('#nMsg').textContent = t('msg');
-  $('#sub').textContent = t('sub');
-  const m = parseFloat(CFG.monthly.price), y = parseFloat(CFG.yearly.price), pct = m && y ? Math.round((1 - y / (m * 12)) * 100) : 0;
-  $('#planM').textContent = t('monthly');
-  $('#planY').innerHTML = esc(t('yearly')) + (pct > 0 ? ` <span class="save">−${pct}%</span>` : '');
-  document.querySelectorAll('[data-plan]').forEach(b => b.classList.toggle('active', b.dataset.plan === plan));
-  const cur = CFG[plan];
-  $('#priceVal').textContent = CFG.currency + cur.price;
-  $('#pricePer').textContent = t(plan === 'yearly' ? 'perYear' : 'perMonth');
-  $('#priceSub').textContent = plan === 'yearly' && pct > 0 ? `${t('billedYear')} ${pct}%` : t('billedMonth');
-  const act = window.Premium && Premium.meActive, until = window.Premium && Premium.until();
-  $('#status').innerHTML = act && until ? `<div class="prem-active">💎 ${esc(t('active'))} <b>${esc(until.toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }))}</b></div>` : '';
-  const buy = $('#buyBtn');
-  if (!user) { buy.textContent = t('login'); buy.disabled = false; $('#buyNote').textContent = ''; }
-  else if (!cur.link) { buy.textContent = t('buy'); buy.disabled = true; $('#buyNote').textContent = t('notCfg'); }
-  else { buy.textContent = t(act ? 'extend' : 'buy'); buy.disabled = false; $('#buyNote').textContent = t('secure'); }
-  $('#uidLine').innerHTML = user ? `${esc(t('yourId'))} <code id="uidCode">${esc(user.uid)}</code> <button type="button" class="linkbtn" id="copyUid">${esc(t('copy'))}</button>` : '';
-  $('#featTitle').textContent = t('featTitle');
-  $('#featGrid').innerHTML = t('feats').map(([i, n, d]) => `<div class="feat"><div class="feat-ic">${i}</div><b>${esc(n)}</b><p>${esc(d)}</p></div>`).join('');
-  $('#cmpTitle').textContent = t('cmpTitle'); $('#thF').textContent = t('thF'); $('#thFree').textContent = t('thFree'); $('#thPrem').textContent = t('thPrem');
-  $('#cmpBody').innerHTML = t('rows').map(([a, b, c]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td><td class="yes">${esc(c)}</td></tr>`).join('');
-  $('#faqTitle').textContent = t('faqTitle');
-  $('#faq').innerHTML = t('faq').map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('');
-  $('#contact').innerHTML = CFG.contact ? `${esc(t('contact'))} ${/^https?:/.test(CFG.contact) ? `<a href="${esc(CFG.contact)}" target="_blank" rel="noopener noreferrer">${esc(CFG.contact)}</a>` : `<a href="mailto:${esc(CFG.contact)}">${esc(CFG.contact)}</a>`}` : '';
+/* ---- v3: compare drawer, ratings, toasts, a11y ---- */
+.cardbtns{display:flex;gap:6px}
+.cmpbtn{width:30px;height:30px;padding:0;font-size:15px;color:#9da2b8}
+.cmpbtn.on{color:#83efdc;border-color:#65e5d155;background:#65e5d111}
+.cmpbar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:50;display:none;align-items:center;gap:10px;padding:10px 12px;border:1px solid #a28aff44;border-radius:14px;background:#121625f2;backdrop-filter:blur(10px);box-shadow:0 14px 40px #0006;font-size:12px;color:#cfd2e6}
+.cmpbar button:disabled{opacity:.45;cursor:not-allowed}
+.cmpdlg{width:min(980px,calc(100% - 24px));max-height:88vh;padding:0;border:1px solid var(--line);border-radius:18px;background:#0e111c;color:var(--text)}
+.cmpdlg::backdrop{background:#05060bcc}
+.cmpbox{padding:18px}
+.cmphead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.cmphead h3{margin:0;font:600 20px var(--display)}
+.cmptable{min-width:560px}
+.cmptable tbody th{padding:13px 16px;border-top:1px solid #ffffff0d;color:#b9bfd4;font-size:10px;text-align:left;background:transparent;vertical-align:top;white-space:nowrap}
+.cmptable td a{color:#c0b2ff;font-weight:700}
+.rating-box{padding:0 0 14px}
+.rating-row{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-top:12px}
+.rating-avg b{font:600 40px/1 var(--display);letter-spacing:-1px}
+.rating-avg span{display:block;font-size:11px;color:var(--muted);margin-top:4px}
+.stars{display:flex;gap:6px}
+.stars button{width:40px;height:40px;padding:0;font-size:21px;color:#5d6280;background:#0f121d}
+.stars button.on{color:#ffd29d;border-color:#ffb15b55;background:#ffb15b12}
+.rating-box .message{margin:12px 0 0}
+.toasts{position:fixed;right:16px;bottom:84px;z-index:60;display:grid;gap:8px}
+.toast{padding:10px 14px;border:1px solid #a28aff44;border-radius:11px;background:#151929;color:var(--text);font-size:12px;box-shadow:0 10px 30px #0006;transition:.3s}
+.toast.out{opacity:0;transform:translateY(6px)}
+.skip{position:absolute;left:12px;top:-60px;z-index:100;padding:9px 14px;border-radius:10px;background:#7155ef;color:#fff;font-size:12px;font-weight:700}
+.skip:focus{top:12px}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+@media(max-width:560px){.cmpbar{width:calc(100% - 24px);justify-content:space-between}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+.likebtn{font-size:11px}
+.likebtn.on{color:#ff9ecb}
+.rating-stars{color:#ffd29d;letter-spacing:2px;margin:0 0 6px}
+
+/* ---- mobile: bottom tab bar (top nav is hidden by styles.css below 560px) ---- */
+.tabbar{display:none}
+button,a{touch-action:manipulation}
+@media(max-width:560px){
+  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:grid;grid-template-columns:repeat(5,1fr);padding:6px 2px calc(6px + env(safe-area-inset-bottom));background:#0b0e18f2;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+  .tabbar a{display:grid;justify-items:center;gap:2px;padding:7px 2px;border-radius:12px;color:#8d93ab;font-size:9.5px;font-weight:600;min-width:0;text-align:center}
+  .tabbar a span{font-size:19px;line-height:1}
+  .tabbar a.on{color:#cbbdff;background:#8b72fa14}
+  body.has-tabbar{padding-bottom:calc(70px + env(safe-area-inset-bottom))}
+  .cmpbar{bottom:calc(78px + env(safe-area-inset-bottom))}
+  .toasts{left:12px;right:12px;bottom:calc(86px + env(safe-area-inset-bottom))}
+  input,select,textarea{font-size:16px!important}
+  .stars button{width:46px;height:46px}
+  .profile-actions .btn{flex:1}
+  .ptabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .ptabs button{flex:none}
 }
 
-document.addEventListener('click', async e => {
-  const p = e.target.closest('[data-plan]');
-  if (p) { plan = p.dataset.plan; paint(); return; }
-  if (e.target.closest('#copyUid')) {
-    try { await navigator.clipboard.writeText(user.uid); if (window.toast) toast(t('copied')); } catch { prompt('', user.uid); }
-    return;
-  }
-  if (e.target.closest('#buyBtn')) {
-    if (!user) { location.href = './account.html#signup'; return; }
-    const link = CFG[plan].link; if (!link) return;
-    const sep = link.includes('?') ? '&' : '?';
-    location.href = `${link}${sep}client_reference_id=${encodeURIComponent(user.uid)}&prefilled_email=${encodeURIComponent(user.email || '')}`;
-  }
-});
-$('#language').addEventListener('click', () => { lang = lang === 'ru' ? 'en' : 'ru'; localStorage.setItem('syntix-lang', lang); paint(); });
-window.addEventListener('syntix-premium', paint);
+/* ---- levels & achievements ---- */
+.lvl-badge{display:inline-flex;align-items:center;gap:6px;margin:0 0 8px;padding:5px 11px;border:1px solid #ffb15b44;border-radius:999px;background:#ffb15b12;color:#ffd29d;font-size:11px;font-weight:700}
+.lvlmini{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:#ffb15b14;color:#ffd29d;font-size:10px;font-weight:700;white-space:nowrap}
+.lvl-card{display:flex;align-items:center;gap:20px;background:radial-gradient(ellipse at 0% 0%,#ffb15b1c,transparent 55%),linear-gradient(145deg,#141827ed,#0e111cee)}
+.lvl-icon{display:grid;place-items:center;width:76px;height:76px;flex:none;border-radius:22px;font-size:38px;background:#ffb15b14;border:1px solid #ffb15b44}
+.lvl-main{flex:1;min-width:0}
+.lvl-main h2{margin:2px 0 10px;font:600 24px var(--display);letter-spacing:-.6px}
+.xpbar,.mini-bar{height:9px;border-radius:99px;background:#ffffff10;overflow:hidden}
+.mini-bar{height:6px;margin-top:8px}
+.xpbar i,.mini-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#9d80ff,#ffb15b)}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.stat{padding:14px;border:1px solid var(--line);border-radius:16px;background:#0f121d;text-align:center}
+.stat b{display:block;font:600 24px var(--display);letter-spacing:-.5px}
+.stat span{font-size:10px;color:#8d93ab}
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.ach{display:flex;gap:13px;align-items:flex-start;padding:14px;border:1px solid var(--line);border-radius:16px;background:#0f121d;opacity:.55;filter:grayscale(.8)}
+.ach.done{opacity:1;filter:none;border-color:#ffb15b44;background:linear-gradient(145deg,#ffb15b10,#0f121d)}
+.ach-ic{display:grid;place-items:center;width:44px;height:44px;flex:none;border-radius:13px;font-size:22px;background:#ffffff0a}
+.ach-tx{flex:1;min-width:0}
+.ach-tx b{display:block;font-size:13px}
+.ach-tx p{margin:3px 0 0;font-size:11px;line-height:1.5;color:#9da2b8}
+.ach-tx em{display:block;margin-top:5px;font-size:10px;font-style:normal;color:#8d93ab}
+@media(max-width:560px){.lvl-card{flex-direction:column;align-items:flex-start;gap:14px}.ach-grid{grid-template-columns:1fr}}
 
-paint();
-const cfg = window.SYNTIX_CONFIG?.firebase;
-if (cfg && cfg.apiKey && window.firebase) {
-  if (!firebase.apps.length) firebase.initializeApp(cfg);
-  firebase.auth().onAuthStateChanged(u => { user = u; paint(); });
-}
-})();
+/* ---- v7: finder, ratings on cards, badge, hashtags, follow, media ---- */
+.hero-actions{margin-top:18px}
+.card .rt,.fbody .rt{margin-left:auto;font-size:11px;font-weight:700;color:#ffd29d}
+.card .bottom{align-items:center}
+.fh{margin:18px 0 10px;font:600 13px var(--display);color:#b9bfd4}
+.fchips{display:flex;flex-wrap:wrap;gap:8px}
+.fchip{padding:9px 14px;border-radius:999px;font-size:12px;color:#aeb3c9;background:#0f121d;cursor:pointer}
+.fchip.on{color:#cbbdff;background:#8b72fa22;border-color:#9279ff77}
+.fgo{margin:18px 0 6px}
+.fgo .btn:disabled{opacity:.45;cursor:not-allowed}
+.fres{display:grid;gap:10px}
+.fitem{display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:14px;border:1px solid var(--line);border-radius:16px;background:#0f121d}
+.fbody{flex:1 1 220px;min-width:0}
+.fbody b{display:flex;align-items:center;gap:6px;font-size:14px}
+.fbody p{margin:4px 0 8px;font-size:12px;color:#9da2b8}
+.fwhy{display:flex;flex-wrap:wrap;gap:6px}
+.fwhy span{padding:3px 9px;border-radius:999px;background:#65e5d10e;border:1px solid #65e5d130;color:#83efdc;font-size:10px}
+.fbtns{display:flex;gap:8px}
+.badge{display:inline-grid;place-items:center;min-width:16px;height:16px;margin-left:5px;padding:0 4px;border-radius:99px;background:#ff6b9d;color:#fff;font:700 9px/1 var(--font);font-style:normal}
+.tabbar a{position:relative}
+.tabbar .badge{position:absolute;top:2px;left:calc(50% + 6px);margin:0}
+.tag-row{display:flex;flex-wrap:wrap;gap:8px}
+.tag-row:empty{display:none}
+.tag-chip{padding:6px 12px;border-radius:999px;font-size:11px;color:#9da2b8;background:#0f121d;cursor:pointer}
+.tag-chip i{font-style:normal;color:#6f748b;margin-left:3px}
+.tag-chip.on{color:#cbbdff;background:#8b72fa22;border-color:#9279ff77}
+.tag-link{display:inline;padding:0;border:0;background:none;color:#83efdc;font:inherit;cursor:pointer}
+.tag-link:hover{text-decoration:underline}
+.follow-btn{padding:5px 11px;border-radius:999px;font-size:10px;font-weight:700;color:#cbbdff;background:#8b72fa14;border-color:#9279ff44;cursor:pointer;white-space:nowrap}
+.follow-btn.on{color:#8d93ab;background:transparent;border-color:var(--line)}
+.media{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:0 0 12px}
+.media img{width:100%;max-height:340px;object-fit:cover;border-radius:14px;border:1px solid var(--line);background:#0b0e18}
+@media(max-width:560px){.tag-row{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.tag-chip{flex:none}.fbtns{width:100%}.fbtns .btn{flex:1}}

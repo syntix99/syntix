@@ -53,7 +53,7 @@
       if (window.toast) toast(tx('Не удалось сохранить оценку. Проверь правила Firestore.', 'Could not save rating. Check Firestore rules.'));
     }
     busy = false;
-    try { localStorage.removeItem('syntix-rt-v1'); } catch {  }
+    try { localStorage.removeItem('syntix-rt-v1'); } catch { /* ignore */ }
     paint();
   });
 

@@ -1,29 +1,58 @@
-<!doctype html>
-<html lang="ru">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090b13"><link rel="manifest" href="./manifest.json"><link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=2"><link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=2"><meta name="apple-mobile-web-app-title" content="Syntix"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="description" content="Предложи AI-сервис для каталога Syntix.">
-<title>Предложить сервис — Syntix</title>
-<link rel="stylesheet" href="./styles.css"><link rel="stylesheet" href="./profile.css">
-<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script defer src="./config.js"></script><script defer src="./nav-auth.js"></script><script defer src="./suggest.js"></script><script defer src="./badge.js"></script><script defer src="./ui.js"></script>
-</head>
-<body><div class="glow g1"></div><div class="glow g2"></div>
-<header class="wrap top"><a class="brand" href="./index.html"><b>S</b> syntix<span>.</span></a><nav><a href="./index.html#catalog" id="navCatalog">Каталог</a><a href="./feed.html" id="navCommunity">Лента</a><a href="./leaderboard.html" id="navTop">Рейтинг</a><a href="./premium.html">💎 Premium</a><a href="./messages.html" id="navMsg">Сообщения</a></nav><div class="actions"><button id="language" type="button">EN</button><a class="btn ghost" href="./account.html">Войти</a></div></header>
-<main class="wrap community-page">
-<section class="community-hero"><small>SYNTIX DIRECTORY</small><h1 id="h">Предложи <em>сервис.</em></h1><p id="sub">Знаешь полезный AI-инструмент, которого нет в каталоге? Расскажи нам.</p></section>
-<section class="community-layout"><div class="community-main">
-<div id="signPrompt" class="community-sign"><h3 id="signTitle"></h3><p id="signText"></p><a class="btn primary" href="./account.html#signup" id="signLink"></a></div>
-<form id="form" class="community-compose" hidden>
-<label class="field"><span id="lName"></span><input id="sName" maxlength="80" required></label>
-<label class="field"><span id="lUrl"></span><input id="sUrl" type="url" maxlength="200" required placeholder="https://"></label>
-<label class="field"><span id="lCat"></span><select id="sCat"></select></label>
-<label class="field"><span id="lNote"></span><textarea id="sNote" rows="4" maxlength="500"></textarea></label>
-<button class="btn primary" id="sSubmit" type="submit"></button><p class="message" id="sMsg" role="status"></p>
-</form></div>
-<aside class="community-side"><div class="detail-panel"><small>HOW IT WORKS</small><h3 id="sideTitle"></h3><p id="sideText"></p></div></aside>
-</section></main>
-<footer class="wrap footer"><a class="brand" href="./index.html"><b>S</b> syntix<span>.</span></a><p>Independent AI tools directory.</p><span>© <span id="year"></span> Syntix</span></footer>
-</body></html>
+(() => {
+const TXT = {
+  ru: { catalog:'Каталог', community:'Лента', messages:'Сообщения', top:'Рейтинг', h:'Предложи <em>сервис.</em>', sub:'Знаешь полезный AI-инструмент, которого нет в каталоге? Расскажи нам.',
+    signTitle:'Нужен аккаунт', signText:'Войди или создай бесплатный аккаунт, чтобы отправить предложение.', signLink:'Войти или зарегистрироваться',
+    name:'Название сервиса', url:'Ссылка на официальный сайт', cat:'Категория', note:'Чем он полезен? (необязательно)', send:'Отправить', busy:'Отправляем…',
+    ok:'Спасибо! Предложение отправлено на рассмотрение.', fail:'Не удалось отправить. Проверь правила Firestore.', badUrl:'Укажи ссылку, начинающуюся с http:// или https://',
+    sideTitle:'Что дальше?', sideText:'Мы проверяем каждое предложение вручную: смотрим, что сервис работает, и уточняем условия бесплатного плана перед добавлением.',
+    cats:{text:'Текст и чат',image:'Изображения',video:'Видео и аудио',code:'Код',work:'Продуктивность'} },
+  en: { catalog:'Directory', community:'Feed', messages:'Messages', top:'Leaderboard', h:'Suggest a <em>tool.</em>', sub:'Know a useful AI tool that is missing from the directory? Tell us.',
+    signTitle:'Account required', signText:'Log in or create a free account to send a suggestion.', signLink:'Log in or sign up',
+    name:'Tool name', url:'Official website link', cat:'Category', note:'Why is it useful? (optional)', send:'Submit', busy:'Sending…',
+    ok:'Thanks! Your suggestion was sent for review.', fail:'Could not send. Check Firestore rules.', badUrl:'Enter a link starting with http:// or https://',
+    sideTitle:'What happens next?', sideText:'We review every suggestion manually: we check that the service works and confirm its free-plan terms before adding it.',
+    cats:{text:'Text & chat',image:'Images',video:'Video & audio',code:'Coding',work:'Productivity'} }
+};
+const $ = s => document.querySelector(s);
+let lang = localStorage.getItem('syntix-lang') || 'ru', db = null, user = null;
+const t = k => TXT[lang][k];
+
+function paint() {
+  document.documentElement.lang = lang;
+  $('#language').textContent = lang === 'ru' ? 'EN' : 'RU';
+  $('#navCatalog').textContent = t('catalog'); $('#navCommunity').textContent = t('community'); $('#navMsg').textContent = t('messages'); $('#navTop').textContent = t('top');
+  $('#h').innerHTML = t('h'); $('#sub').textContent = t('sub');
+  $('#signTitle').textContent = t('signTitle'); $('#signText').textContent = t('signText'); $('#signLink').textContent = t('signLink');
+  $('#lName').textContent = t('name'); $('#lUrl').textContent = t('url'); $('#lCat').textContent = t('cat'); $('#lNote').textContent = t('note');
+  $('#sSubmit').textContent = t('send'); $('#sideTitle').textContent = t('sideTitle'); $('#sideText').textContent = t('sideText');
+  const cur = $('#sCat').value || 'text';
+  $('#sCat').innerHTML = Object.entries(t('cats')).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+  $('#sCat').value = cur;
+  $('#year').textContent = new Date().getFullYear();
+  $('#form').hidden = !user; $('#signPrompt').hidden = !!user;
+}
+
+$('#language').addEventListener('click', () => { lang = lang === 'ru' ? 'en' : 'ru'; localStorage.setItem('syntix-lang', lang); paint(); });
+
+$('#form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = $('#sMsg'), btn = $('#sSubmit');
+  const name = $('#sName').value.trim(), url = $('#sUrl').value.trim(), note = $('#sNote').value.trim();
+  if (!/^https?:\/\/.+/i.test(url)) { msg.className = 'message error'; msg.textContent = t('badUrl'); return; }
+  btn.disabled = true; btn.textContent = t('busy');
+  try {
+    await db.collection('tool_suggestions').add({ name, url, category: $('#sCat').value, note, uid: user.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    $('#form').reset(); msg.className = 'message ok'; msg.textContent = t('ok');
+    if (window.toast) toast(t('ok'));
+  } catch (err) { console.error('Syntix suggest:', err); msg.className = 'message error'; msg.textContent = t('fail'); }
+  btn.disabled = false; btn.textContent = t('send');
+});
+
+paint();
+const cfg = window.SYNTIX_CONFIG?.firebase;
+if (cfg && cfg.apiKey && !cfg.apiKey.startsWith('PASTE_') && window.firebase) {
+  if (!firebase.apps.length) firebase.initializeApp(cfg);
+  db = firebase.firestore();
+  firebase.auth().onAuthStateChanged(u => { user = u; paint(); });
+}
+})();

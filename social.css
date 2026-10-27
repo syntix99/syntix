@@ -1,105 +1,227 @@
-# Syntix — Firebase migration
+/* Syntix feed, channels and messages — built on styles.css tokens */
+.av{display:inline-grid;place-items:center;flex:none;width:36px;height:36px;border-radius:50%;object-fit:cover;color:#fff;font:700 14px var(--display);overflow:hidden}
+.av.md{width:44px;height:44px;font-size:16px}
+.av.xs{width:28px;height:28px;font-size:12px}
+.av.lg{width:52px;height:52px;font-size:19px}
+.muted.small,.small{font-size:11px}
+.pad{padding:8px 12px}
+.notice{padding:14px 16px;border:1px solid #a28aff2e;border-radius:14px;background:#8b72fa10;color:#cfd2e6;font-size:12px}
 
-This package replaces the previous Supabase browser integration with Firebase Authentication (email/password) and Cloud Firestore. The AI directory and detail pages are retained.
+/* layout */
+.feed-page{display:grid;grid-template-columns:230px minmax(0,1fr) 270px;gap:22px;align-items:start;padding-top:28px;padding-bottom:70px}
+.feed-left,.feed-right{position:sticky;top:18px;display:grid;gap:14px}
+.feed-center{display:grid;gap:16px;min-width:0}
+.side-card{padding:14px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(160deg,#141827e8,#0e111cf0)}
+.side-card>small,.side-head small{display:block;font-size:10px;letter-spacing:1.3px;color:#8d93ab;margin:2px 4px 10px}
+.side-head{display:flex;align-items:center;justify-content:space-between}
+.side-head small{margin-bottom:0}
+.mini-btn{width:28px;height:28px;padding:0;border-radius:9px;font-size:14px;color:#c6b8ff;background:#8b72fa14;border-color:#9279ff40;cursor:pointer}
+.mini-btn:hover{background:#8b72fa2b}
+.chan-list{display:grid;gap:2px;max-height:52vh;overflow:auto}
+.chan{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:1px solid transparent;border-radius:11px;background:transparent;color:#aeb3c9;font-size:12px;text-align:left;cursor:pointer;transition:.15s}
+.chan:hover{background:#ffffff08;color:#fff}
+.chan.active{background:#8b72fa19;border-color:#9279ff44;color:#d8cfff}
+.chan .ci{font-size:16px;width:22px;text-align:center}
+.chan .cn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chan .lock{font-size:11px;opacity:.7}
+.jdot{width:7px;height:7px;border-radius:50%;background:#83efdc;box-shadow:0 0 8px #83efdc88}
+.side-link{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:11px;color:#aeb3c9;font-size:12px}
+.side-link:hover{background:#ffffff08;color:#fff}
+.side-link span:first-child{width:20px;text-align:center;color:#b9a8ff}
+.rules{margin:0;padding-left:18px;font-size:11px;line-height:1.7;color:#9da2b8}
 
-## Setup
-1. Create a project at https://console.firebase.google.com/ (free Spark plan).
-2. Add a **Web app** in Project settings and copy its Firebase web config into `config.js`. Replace every `PASTE_...` placeholder. Firebase web config is public client configuration; never paste a service account private key or Admin SDK credentials here.
-3. In **Authentication → Sign-in method**, enable **Email/Password**.
-4. In **Authentication → Settings → Authorized domains**, add your GitHub Pages hostname, e.g. `syntix99.github.io`.
-5. Create **Firestore Database** in test/production mode, then open **Firestore → Rules** and paste `firestore.rules`, then Publish. Do not use unrestricted test rules.
-6. Upload the contents of this folder to the root of the existing GitHub repository, replacing files with the same names. Keep `tools.json`, `app.js`, `tool.js`, `styles.css`, and `.nojekyll`. Commit changes and wait for GitHub Pages to deploy.
+/* channel banner */
+.chan-banner{display:flex;flex-wrap:wrap;align-items:center;gap:18px;padding:22px;border:1px solid #a28aff30;border-radius:20px;background:radial-gradient(ellipse at 8% 0%,#9375ff22,transparent 55%),linear-gradient(145deg,#151a2cee,#0e111cf0)}
+.cb-icon{display:grid;place-items:center;width:68px;height:68px;border-radius:20px;font-size:34px;background:#8b72fa1f;border:1px solid #9279ff44}
+.cb-info{flex:1 1 240px;min-width:0}
+.cb-info small{font-size:10px;letter-spacing:1.2px;color:#9da2b8;text-transform:uppercase}
+.cb-info h1{font:600 clamp(24px,3.4vw,34px)/1.15 var(--display);letter-spacing:-1px;margin:4px 0 6px;overflow-wrap:anywhere}
+.cb-info p{margin:0 0 4px;font-size:12px;color:#b6bbce}
+.cb-actions{display:flex;flex-wrap:wrap;gap:8px}
+.btn.danger{color:#ff9aa8;border-color:#ff9aa84d}
 
-## Features
-- Public read access for community posts and comments.
-- Only signed-in users can create posts/comments.
-- Users can edit/delete only their own documents at the Firestore rules layer.
-- Global community feed, comments in feed, and discussions on AI tool detail pages.
-- RU/EN language toggle retained.
+/* composer */
+.compose-card{padding:16px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(160deg,#141827f0,#0e111cf5);box-shadow:0 18px 50px #0004}
+.compose-card.sign{text-align:center;padding:24px}
+.compose-card.sign h3{margin:0 0 6px;font:600 20px var(--display)}
+.compose-card.sign p{margin:0 0 14px;font-size:12px;color:var(--muted)}
+.compose-row{display:flex;gap:12px}
+.compose-fields{flex:1;min-width:0;display:grid;gap:8px}
+.compose-fields input,.compose-fields textarea,.compose-bar select,.cform input,.dlg-box input,.dlg-box textarea,.dlg-box select,.feed-search input,.dm-form textarea{width:100%;background:#0b0e18;color:var(--text);border:1px solid var(--line);border-radius:11px;outline:0;font:12px/1.5 var(--font)}
+.compose-fields input{height:40px;padding:0 12px;font-weight:600}
+.compose-fields textarea{padding:11px 12px;resize:none;min-height:84px}
+.compose-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px}
+.compose-bar select{width:auto;max-width:200px;height:38px;padding:0 10px}
+.counter{margin-left:auto;font-size:10px;color:#7f859c}
+.compose-fields input:focus,.compose-fields textarea:focus,.compose-bar select:focus,.cform input:focus,.dlg-box input:focus,.dlg-box textarea:focus,.dlg-box select:focus,.feed-search input:focus,.dm-form textarea:focus{border-color:#9d80ff99}
 
-## Notes
-- This migration does not automatically copy old Supabase users or posts. Old Supabase data remains in Supabase unless you export/migrate it separately.
-- Firestore may require a composite index for a query. If Firebase shows a `create index` link in the console, open it and create the suggested index.
-- Never add Firebase Admin SDK/service account secrets to GitHub Pages.
-- Firebase free plan has usage quotas. Review current limits in Firebase documentation.
-- Verify registration, sign-in, posting, and comments on the deployed site after configuring the Firebase project. The package cannot be connected to your Firebase project until you provide your own web app config in `config.js`.
+/* controls */
+.feed-controls{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.pills{display:flex;gap:6px}
+.pill-btn{padding:8px 14px;border-radius:999px;font-size:11px;color:#9da2b8;background:#0f121d;cursor:pointer}
+.pill-btn.active{color:#cbbdff;background:#8b72fa19;border-color:#9279ff66}
+.feed-search{display:flex;align-items:center;gap:8px;flex:1 1 200px;max-width:300px;padding:0 12px;border:1px solid var(--line);border-radius:999px;background:#0b0e18}
+.feed-search span{color:#7f859c}
+.feed-search input{border:0;background:transparent;height:38px;padding:0}
 
+/* posts */
+.posts{display:grid;gap:14px}
+.post{position:relative;padding:18px 18px 12px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(160deg,#141827e6,#0e111cf2);transition:border-color .2s,transform .2s,box-shadow .2s}
+.post:hover{border-color:#a28aff44;box-shadow:0 14px 40px #0004}
+.post-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.post-who{display:grid;gap:1px;min-width:0;flex:1}
+.post-who .author-link{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.when{font-size:10px;color:#7f859c}
+.post-title{margin:0 0 6px;font:600 18px/1.3 var(--display);letter-spacing:-.3px;overflow-wrap:anywhere}
+.post-body{margin:0 0 12px;font-size:13px;line-height:1.7;color:#c7cbdd;overflow-wrap:anywhere}
+.post-body a,.cm p a{color:#bfb0ff;text-decoration:underline}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border:1px solid #a28aff33;border-radius:999px;background:#8b72fa12;color:#cbbdff;font-size:11px;font-weight:600;cursor:pointer}
+.pill.tool{margin-bottom:10px;border-color:#65e5d138;background:#65e5d10e;color:#83efdc}
+.post-actions{display:flex;align-items:center;gap:4px;margin-top:4px;padding-top:8px;border-top:1px solid #ffffff0a}
+.act{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:0;border-radius:10px;background:transparent;color:#9da2b8;font-size:12px;cursor:pointer;transition:.15s}
+.act:hover{background:#ffffff0a;color:#fff}
+.act b{font-weight:600}
+.act.like.on{color:#ff9ecb}
+.act.quiet{font-size:10px;color:#6f748b}
+.grow{flex:1}
+.thread{display:grid;gap:12px;margin-top:10px;padding-top:12px;border-top:1px solid #ffffff0a}
+.cm{display:flex;gap:10px}
+.cm-body{flex:1;min-width:0;padding:9px 12px;border-radius:14px;background:#ffffff07}
+.cm-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cm-head .author-link{font-size:12px}
+.cm p{margin:4px 0 0;font-size:12px;line-height:1.6;color:#c0c4d8;overflow-wrap:anywhere}
+.cform{display:flex;gap:8px}
+.cform input{height:40px;padding:0 12px}
+.empty-state{padding:44px 20px;text-align:center;border:1px dashed #ffffff1c;border-radius:20px;color:#9da2b8;font-size:13px}
+.empty-state .big{font-size:38px;margin-bottom:8px}
+.more-wrap{text-align:center}
+.post.skel{display:grid;gap:12px}
+.sk{border-radius:8px;background:linear-gradient(90deg,#ffffff08,#ffffff14,#ffffff08);background-size:200% 100%;animation:skl 1.3s infinite}
+.sk.a{height:14px;width:35%}.sk.b{height:12px;width:92%}.sk.c{height:12px;width:68%}
+@keyframes skl{from{background-position:200% 0}to{background-position:-200% 0}}
 
-## Firebase configuration
+/* dialog */
+.dlg{width:min(460px,calc(100% - 24px));padding:0;border:1px solid var(--line);border-radius:20px;background:#0e111c;color:var(--text)}
+.dlg::backdrop{background:#05060bcc}
+.dlg-box{display:grid;gap:14px;padding:20px}
+.dlg-head{display:flex;align-items:center;justify-content:space-between}
+.dlg-head h3{margin:0;font:600 20px var(--display)}
+.dlg-box input,.dlg-box select{height:42px;padding:0 12px}
+.dlg-box textarea{padding:11px 12px;resize:vertical}
+.dlg-box .field{margin:0}
+.dlg-actions{display:flex;justify-content:flex-end}
+.icon-pick{display:flex;flex-wrap:wrap;gap:6px}
+.icon-opt{width:40px;height:40px;padding:0;font-size:20px;border-radius:11px;background:#0f121d;cursor:pointer}
+.icon-opt.on{border-color:#9279ff;background:#8b72fa22}
 
-`config.js` is populated with the Firebase Web App configuration for project `syntix-b5c57`. Firestore rules are in `firestore.rules`; publish them in Firebase Console → Firestore Database → Rules.
+/* messages */
+.dm-page{display:grid;grid-template-columns:330px minmax(0,1fr);gap:18px;height:calc(100vh - 150px);min-height:520px;padding-top:24px;padding-bottom:24px}
+.dm-list,.dm-chat{display:flex;flex-direction:column;min-height:0;border:1px solid var(--line);border-radius:20px;background:linear-gradient(160deg,#141827ee,#0e111cf5);overflow:hidden}
+.dm-list-head{padding:18px 18px 12px}
+.dm-list-head h1{margin:0;font:600 24px var(--display);letter-spacing:-.6px}
+.threads{flex:1;overflow:auto;padding:0 8px 10px}
+.thread-item{display:flex;align-items:center;gap:12px;width:100%;padding:11px 10px;border:1px solid transparent;border-radius:14px;background:transparent;color:inherit;text-align:left;cursor:pointer}
+.thread-item:hover{background:#ffffff08}
+.thread-item.active{background:#8b72fa19;border-color:#9279ff44}
+.ti-main{flex:1;min-width:0}
+.ti-top{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.ti-name{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ti-time{font-size:10px;color:#7f859c;white-space:nowrap}
+.ti-last{font-size:11px;color:#9da2b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+.ti-dot{width:9px;height:9px;border-radius:50%;background:#9d80ff;box-shadow:0 0 10px #9d80ffaa;flex:none}
+.dm-head{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid #ffffff0d}
+.dm-head a.who{display:flex;align-items:center;gap:12px;font-weight:700;font-size:14px}
+.dm-back{display:none}
+.dm-msgs{flex:1;overflow:auto;display:flex;flex-direction:column;gap:6px;padding:18px}
+.day-sep{align-self:center;margin:10px 0 4px;padding:3px 10px;border-radius:999px;background:#ffffff0a;color:#8d93ab;font-size:10px}
+.bubble{max-width:min(75%,520px);padding:9px 13px;border-radius:18px;font-size:13px;line-height:1.55;overflow-wrap:anywhere;background:#1b2033;color:#d6d9e8;border-bottom-left-radius:6px}
+.bubble.me{align-self:flex-end;background:linear-gradient(135deg,#7f63f6,#6a4de6);color:#fff;border-bottom-left-radius:18px;border-bottom-right-radius:6px}
+.bubble a{color:inherit;text-decoration:underline}
+.bubble time{display:block;margin-top:3px;font-size:9px;opacity:.6;text-align:right}
+.dm-form{display:flex;align-items:flex-end;gap:10px;padding:12px 14px;border-top:1px solid #ffffff0d}
+.dm-form textarea{min-height:44px;max-height:140px;padding:11px 14px;resize:none;border-radius:16px}
+.dm-empty{display:grid;place-items:center;flex:1;padding:30px;text-align:center;color:#9da2b8;font-size:13px}
+.dm-empty .big{font-size:42px;margin-bottom:8px}
 
+/* leaderboard */
+.lb-page{display:grid;gap:18px;padding-top:28px;padding-bottom:70px}
+.lb-hero small{font-size:10px;letter-spacing:1.4px;color:#9da2b8}
+.lb-hero h1{font:600 clamp(34px,5vw,54px)/1.05 var(--display);letter-spacing:-2px;margin:6px 0 8px}
+.lb-hero h1 em{font-style:normal;background:linear-gradient(90deg,#b7a2ff,#ffb15b);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lb-hero p{margin:0;font-size:13px;color:var(--muted);max-width:560px}
+.lb-controls{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between}
+.lb-h2{margin:0;font:600 22px var(--display);letter-spacing:-.5px}
+.me-card{display:flex;align-items:center;gap:14px;padding:14px 18px;border:1px solid #9279ff55;border-radius:18px;background:linear-gradient(145deg,#8b72fa1c,#0e111cf0)}
+.me-rank{font:700 26px var(--display);color:#cbbdff;min-width:54px}
+.me-info{display:grid;gap:2px;min-width:0}
+.me-info small{font-size:10px;color:#9da2b8;letter-spacing:1px;text-transform:uppercase}
+.me-info b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.me-info span{font-size:11px;color:#b6bbce}
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:12px;padding:10px 0 4px}
+.pod{display:grid;justify-items:center;gap:6px;flex:1;max-width:230px;padding:18px 12px 16px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(160deg,#141827ee,#0e111cf5);text-align:center;min-width:0;transition:transform .2s,border-color .2s}
+.pod:hover{transform:translateY(-3px);border-color:#a28aff55}
+.pod b{max-width:100%;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pod.p1{padding-top:30px;padding-bottom:24px;border-color:#ffb15b55;background:linear-gradient(160deg,#ffb15b1a,#0e111cf5)}
+.pod.p1 .av{width:64px;height:64px;font-size:24px}
+.medal{font-size:28px;line-height:1}
+.pxp{font:700 16px var(--display);color:#ffd29d}
+.picons{letter-spacing:2px;font-size:13px}
+.lb-list{display:grid;gap:8px}
+.lb-row{display:flex;align-items:center;gap:14px;padding:12px 16px;border:1px solid var(--line);border-radius:16px;background:#0f121d;transition:border-color .2s,background .2s}
+.lb-row:hover{border-color:#a28aff44;background:#121626}
+.lb-row.mine{border-color:#9279ff66;background:#8b72fa14}
+.lb-rank{min-width:30px;text-align:center;font:700 15px var(--display);color:#9da2b8}
+.lb-name{flex:1;min-width:0;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-name small{display:flex;align-items:center;gap:8px;margin-top:3px;font-size:11px;font-weight:400;color:#8d93ab;white-space:normal}
+.lb-xp{font:700 15px var(--display);color:#ffd29d;text-align:right;white-space:nowrap}
+.lb-xp small{display:block;font:400 10px var(--font);color:#8d93ab}
+.lb-meta{margin:0;font-size:11px;color:#7f859c;text-align:center}
+.how-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:14px 0}
+.how-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#0b0e18;font-size:12px}
+.how-item .hi{font-size:18px}
+.how-item b{margin-left:auto;color:#83efdc}
 
-## Profiles (public)
-- `profile.html` + `profile.js` + `profile.css`: public profile at `profile.html?uid=<uid>`; own profile at `profile.html` (needs sign-in).
-- Data: `profiles/{uid}` (displayName, bio, avatar, showFavorites, lang, createdAt, updatedAt) and `profiles/{uid}/favorites/{toolSlug}`.
-- Avatar is resized in the browser to 160×160 JPEG and stored as a data URL inside the profile document (no Firebase Storage needed).
-- Favorites: heart button on `tool.html` (`favorites.js`). Visible to others only when the owner enables it in settings.
-- Activity tab lists the user's posts and comments (simple `where uid ==` queries, no composite index needed).
-- `nav-auth.js` turns the "Войти" button into "Профиль" when signed in.
-- **Republish `firestore.rules`** (Firestore → Rules → Publish) after uploading these files.
-
-## Site improvements (v2)
-- **Catalog:** hearts now sync with Firestore when signed in (guests stay on localStorage; first login merges both). New "♥ Избранное" filter, `/` focuses search, `?cat=code&q=chat` deep links, category tag on tool pages links to the filtered catalog.
-- **Comparison table** (`#comparison`) restored on the home page and added to the nav.
-- **Tool pages:** "Similar tools" block (same category).
-- **Community:** authors can delete their own posts/comments; comment loading uses one `in` query per 10 posts instead of one per post; tool discussions sorted client-side. **No composite indexes are required anymore.**
-- **Account:** password reset ("Забыли пароль?"), specific error messages, signed-in users are redirected to their profile.
-- **Rules:** `firestore.rules` validates fields and lengths for posts, comments, profiles and favorites. Republish after upload.
-- Favicon added to all pages; Open Graph tags on the home page.
-
-## v3
-- **Ratings:** 1–5 stars on each tool page (`tool-rating.js`, collection `tool_ratings`, one rating per user, click the same star to remove). Average and count are visible to everyone. Needs republished `firestore.rules`.
-- **Compare drawer:** ⚖ button on every catalog card, pick 2–3 tools and open a side-by-side table.
-- **Search:** multi-word matching ("code chat"), `Esc` clears the search field.
-- **Shared UI (`ui.js`):** toast notifications, "skip to content" link, Share button on tool pages.
-- **Accessibility:** visible focus rings, `aria-live` result counter, reduced-motion support.
-
-## v4
-- **Likes** on community posts (`post_likes`), **reports** on posts/comments (`reports`, write-only: review them in Firebase Console → Firestore → `reports`; each report holds the collection name and document id).
-- **Suggest a tool:** `suggest.html` writes to `tool_suggestions` (readable only by its author; you read all of them in the Console). Linked from the home page footer.
-- **Tool pages:** latest community posts about the tool (`tool-posts.js`).
-- **Profile:** new "Ratings" tab.
-- Republish `firestore.rules` after uploading.
-
-## v5 — Feed, channels, direct messages
-- **`community.html` is now a redirect** to the new **`feed.html`** (delete the old `community.js` from your repo, it is no longer used). Old posts/comments/likes stay: they use the same collections.
-- **Channels:** create your own (name, description, icon, "anyone can post" or "owner-only"), follow/unfollow, share link, owner can delete the channel and any post inside it. Collections: `channels`, `profiles/{uid}/joined`, posts carry `channelId`.
-- **Direct messages:** `messages.html` — real-time chats (`dm_threads/{uidA_uidB}/messages`). Open a chat via the ✉ button under a post or on a member profile (`messages.html?to=<uid>`). Members can switch DMs off in profile settings (`allowDms`); unread dots are tracked per device.
-- **Feed UI:** avatars, relative time, likes, inline comments, sort (latest/top), search, load-more, tool and channel pills.
-- **Shared helpers:** `core.js` (profiles cache, avatars, time, links). Styles in `social.css`.
-- **Republish `firestore.rules`** — it was rewritten (channels, DMs, new post fields).
-
-## v6 — Leaderboard, levels, achievements
-- **`leaderboard.html`:** top members (week / month / all time, podium + list, "your rank" card) and top tools (Bayesian-weighted average rating). Includes the XP rules and the full achievements catalog.
-- **Levels & achievements (`gamify.js`):** XP = post 10, comment 3, like on your post 2, tool rating 2, own channel 15. 13 achievements (first post, writer, critic, founder, 3/7-day streaks, complete profile…). Shown on every profile (🏆 Achievements tab + level badge); the owner gets a toast when a new one unlocks.
-- **Nothing is stored:** scores are derived from public data (posts, comments, likes, ratings, channels), so they cannot be edited. Anti-abuse: max 5 posts and 10 comments per day count, self-likes are ignored.
-- **Cost:** the leaderboard reads ~2,000 documents per refresh; the result is cached in the browser for 15 minutes. For a large audience move this to a scheduled Cloud Function that writes a `leaderboard` document.
-- No new Firestore rules are needed (only public reads).
-
-## v7
-- **Tool finder** on the home page (🎯): pick tasks, get the 4 best matches, optionally weighted by community rating.
-- **Ratings on catalog cards** + sort "По рейтингу" (`ratings.js`, cached 30 min).
-- **Unread DM badge** on the Messages tab/link and in the page title (`badge.js`).
-- **Following:** follow people (profile + feed) and channels; "Подписки" tab in the feed (`profiles/{uid}/following`, private). Republish `firestore.rules`.
-- **Feed:** clickable #hashtags + trending tags row, inline previews for direct https image links, draft autosave, Ctrl/Cmd+Enter to publish.
-- **PWA:** installable on phones (`manifest.json`, `sw.js`, icons). Network-first, so updates always win.
-
-### Installing the app / icon troubleshooting
-- Upload **all** of: `manifest.json`, `sw.js`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png` (binary PNGs are easy to miss). Check that `https://<your-site>/icon-192.png` opens in a browser.
-- The old `manifest.webmanifest` is replaced by `manifest.json` — delete the old file.
-- The OS stores the icon at install time: **remove the already installed app and install again** after deploying.
-
-## v8 — Premium 💎 (paid features)
-**How it is secured.** Premium status lives in `premium/{uid}` = `{ until: <timestamp>, plan }`. Clients can only *read* it (rules: `allow write: if false`), so nobody can grant it to themselves. The valuable perks are enforced **by the Firestore rules**, not just hidden in the UI: long posts (15,000 chars), editing own posts, and the profile accent colour all call `isPremium()` in `firestore.rules`.
-
-**Perks:** 💎 badge (feed, profile, leaderboard) · accent colour + gold avatar ring · edit own posts · posts up to 15,000 characters · compare up to 6 tools · Insights tab (activity chart, best posting hours, top posts) · CSV export of favourites · "Patron" achievement. (Insights and CSV export are UI-gated only — they show data that is public anyway.)
-
-**Pages/files:** `premium.html` (pricing), `premium-page.js`, `premium.js` (status loader), `premium-config.js` (**edit prices and payment links here**), `functions/` + `firebase.json` + `.firebaserc` (optional webhook).
-
-### Taking payments — pick ONE way to activate Premium
-1. In your payment provider (e.g. **Stripe → Payment Links**) create two *recurring* prices (monthly / yearly). Put the payment-link URLs and the same prices into `premium-config.js`. The site adds `?client_reference_id=<uid>&prefilled_email=<email>` so every payment is tied to a user.
-2. **Manual activation (free, no server):** when a payment arrives, find the `client_reference_id` (= user ID) in the provider dashboard, then in Firebase Console → Firestore → collection `premium` → add a document whose **ID is that user ID** with fields `until` (type **timestamp**, the end of the paid period) and `plan` (string, e.g. `monthly`). Premium turns on immediately.
-3. **Automatic activation (needs the Blaze plan):** deploy `functions/` — `firebase functions:secrets:set STRIPE_SECRET_KEY`, `firebase functions:secrets:set STRIPE_WEBHOOK_SECRET`, `firebase deploy --only functions,firestore:rules`. Add the printed function URL as a webhook endpoint in Stripe for the events `checkout.session.completed` and `invoice.paid`. Try it in Stripe **test mode** first.
-- Never put secret keys (Stripe `sk_…`) into any file that is published on GitHub Pages.
-- **Republish `firestore.rules`** (new: `premium`, post editing, long posts, profile accent).
+@media(max-width:1020px){.feed-page{grid-template-columns:210px minmax(0,1fr)}.feed-right{display:none}}
+@media(max-width:760px){
+  .feed-page{grid-template-columns:minmax(0,1fr);gap:12px;padding-top:14px;padding-bottom:30px}
+  .feed-left{position:static}
+  .feed-left .side-card{padding:6px 0 0;border:0;background:none}
+  .side-head{padding:0 2px 8px}
+  .chan-scroll{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .chan-scroll::-webkit-scrollbar{display:none}
+  .chan-list{display:contents;max-height:none}
+  .chan{flex:none;width:auto;white-space:nowrap;padding:9px 14px;border-color:var(--line);border-radius:999px;background:#0f121d}
+  .chan.active{background:#8b72fa22}
+  .mini-btn{width:36px;height:36px}
+  .compose-card{padding:14px;border-radius:18px}
+  .compose-row .av{display:none}
+  .compose-bar select{flex:1 1 calc(50% - 4px);max-width:none;height:42px}
+  .compose-bar .counter{order:5;margin-left:0}
+  .compose-bar .btn{flex:1 1 100%;order:6;height:44px}
+  .compose-fields input,.compose-fields textarea,.compose-bar select,.cform input,.dlg-box input,.dlg-box textarea,.dlg-box select,.feed-search input,.dm-form textarea{font-size:16px}
+  .feed-search{max-width:none;flex:1 1 100%}
+  .pills{width:100%}.pill-btn{flex:1;padding:10px 14px}
+  .post{padding:15px 14px 8px;border-radius:18px}
+  .post-body{font-size:14px}
+  .act{min-height:40px;padding:8px 11px}
+  .linkbtn{padding:10px 6px}
+  .cform input{height:44px}
+  .chan-banner{padding:16px;gap:12px}
+  .cb-icon{width:54px;height:54px;font-size:28px}
+  .cb-actions{width:100%}.cb-actions .btn{flex:1}
+  .dlg{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow:auto}
+  /* messages: list page + full-screen chat */
+  .dm-page{display:block;height:auto;min-height:calc(100vh - 190px);padding-top:12px;padding-bottom:12px}
+  .dm-list{border-radius:18px;min-height:60vh}
+  .dm-page .dm-chat{display:none}
+  .dm-page.chat-open .dm-list{display:none}
+  .dm-page.chat-open .dm-chat{display:flex;position:fixed;left:0;right:0;top:var(--vvt,0px);height:100vh;height:var(--vvh,100dvh);z-index:80;border:0;border-radius:0;background:#0b0e18}
+  .dm-back{display:inline-grid;width:40px;height:40px;font-size:18px}
+  .dm-head{padding:10px 12px;padding-top:max(10px,env(safe-area-inset-top))}
+  .dm-form{padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom))}
+  .dm-form .btn{height:44px}
+  .dm-msgs{padding:12px;overscroll-behavior:contain}
+  .bubble{max-width:84%;font-size:14px}
+  .podium{gap:8px}.pod{padding:14px 6px 12px}.pod.p1{padding-top:22px}.pod b{font-size:12px}.pod .av{width:40px;height:40px}.pod.p1 .av{width:52px;height:52px}.pxp{font-size:13px}.medal{font-size:22px}.picons{font-size:11px;letter-spacing:1px}
+  .lb-row{padding:10px 12px;gap:10px}.lb-controls .pills{width:100%}
+}

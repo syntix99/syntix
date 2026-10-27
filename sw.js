@@ -1,4 +1,4 @@
-// Syntix service worker: network-first for our own files, so updates always win; cache is only an offline fallback
+/* Syntix service worker: network-first for our own files, so updates always win; cache is only an offline fallback */
 const CACHE = 'syntix-v2';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => {

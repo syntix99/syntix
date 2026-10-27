@@ -1,4 +1,4 @@
-// Shared UI helpers: toasts, skip link, share button
+/* Shared UI helpers: toasts, skip link, share button */
 (() => {
   const ru = () => (localStorage.getItem('syntix-lang') || 'ru') === 'ru';
 
