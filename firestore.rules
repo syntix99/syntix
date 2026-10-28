@@ -6,6 +6,17 @@ service cloud.firestore {
     function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
     function str(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
 
+    // Premium status lives in premium/{uid}; clients can read it but never write it.
+    function isPremium(uid) {
+      return exists(/databases/$(database)/documents/premium/$(uid))
+        && get(/databases/$(database)/documents/premium/$(uid)).data.until > request.time;
+    }
+
+    match /premium/{uid} {
+      allow read: if true;
+      allow write: if false;   // written only by the site owner (Console) or the Stripe webhook (Admin SDK)
+    }
+
     // ---------- helpers for channels ----------
     function channelPostOk(cid) {
       return cid == '' || (
@@ -23,13 +34,15 @@ service cloud.firestore {
     match /profiles/{uid} {
       function validProfile() {
         let d = request.resource.data;
-        return d.keys().hasOnly(['displayName', 'bio', 'avatar', 'showFavorites', 'allowDms', 'lang', 'createdAt', 'updatedAt'])
+        return d.keys().hasOnly(['displayName', 'bio', 'avatar', 'showFavorites', 'allowDms', 'accent', 'lang', 'createdAt', 'updatedAt'])
           && str(d.displayName, 1, 40)
           && str(d.bio, 0, 300)
           && str(d.avatar, 0, 40000)
           && (d.avatar == '' || d.avatar.matches('^data:image/.*'))
           && d.showFavorites is bool
           && (!('allowDms' in d) || d.allowDms is bool)
+          && (!('accent' in d) || d.accent == ''
+              || (d.accent in ['#9d80ff', '#ff9ecb', '#65e5d1', '#ffb15b', '#7fb2ff', '#b6f35c'] && isPremium(request.auth.uid)))
           && d.lang in ['ru', 'en']
           && d.updatedAt == request.time;
       }
@@ -101,13 +114,19 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['title', 'body', 'toolName', 'channelId', 'uid', 'authorName', 'createdAt'])
         && request.resource.data.uid == request.auth.uid
         && str(request.resource.data.title, 0, 120)
-        && str(request.resource.data.body, 1, 5000)
+        && (str(request.resource.data.body, 1, 5000) || (str(request.resource.data.body, 1, 15000) && isPremium(request.auth.uid)))
         && str(request.resource.data.toolName, 0, 80)
         && str(request.resource.data.get('channelId', ''), 0, 40)
         && channelPostOk(request.resource.data.get('channelId', ''))
         && str(request.resource.data.authorName, 1, 100)
         && request.resource.data.createdAt == request.time;
-      allow update: if false;
+      // Premium authors can edit the text of their own posts (nothing else may change)
+      allow update: if isOwner(resource.data.uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'body', 'editedAt'])
+        && str(request.resource.data.title, 0, 120)
+        && str(request.resource.data.body, 1, 15000)
+        && request.resource.data.editedAt == request.time
+        && isPremium(request.auth.uid);
       // the author, or the owner of the channel the post lives in
       allow delete: if isOwner(resource.data.uid) || isChannelOwner(resource.data.get('channelId', ''));
     }

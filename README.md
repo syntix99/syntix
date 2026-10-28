@@ -1,91 +1,72 @@
-# Syntix — Firebase migration
+# Syntix — каталог AI-инструментов, лента, каналы, сообщения, рейтинг, Premium
 
-This package replaces the previous Supabase browser integration with Firebase Authentication (email/password) and Cloud Firestore. The AI directory and detail pages are retained.
+Статический сайт для GitHub Pages + Firebase (Auth + Firestore). Никакого сервера и сборки: достаточно загрузить файлы в репозиторий.
 
-## Setup
-1. Create a project at https://console.firebase.google.com/ (free Spark plan).
-2. Add a **Web app** in Project settings and copy its Firebase web config into `config.js`. Replace every `PASTE_...` placeholder. Firebase web config is public client configuration; never paste a service account private key or Admin SDK credentials here.
-3. In **Authentication → Sign-in method**, enable **Email/Password**.
-4. In **Authentication → Settings → Authorized domains**, add your GitHub Pages hostname, e.g. `syntix99.github.io`.
-5. Create **Firestore Database** in test/production mode, then open **Firestore → Rules** and paste `firestore.rules`, then Publish. Do not use unrestricted test rules.
-6. Upload the contents of this folder to the root of the existing GitHub repository, replacing files with the same names. Keep `tools.json`, `app.js`, `tool.js`, `styles.css`, and `.nojekyll`. Commit changes and wait for GitHub Pages to deploy.
+## 1. Быстрый запуск
 
-## Features
-- Public read access for community posts and comments.
-- Only signed-in users can create posts/comments.
-- Users can edit/delete only their own documents at the Firestore rules layer.
-- Global community feed, comments in feed, and discussions on AI tool detail pages.
-- RU/EN language toggle retained.
+1. **Firebase Console** → проект → *Authentication → Sign-in method* → включить **Email/Password**.
+2. *Authentication → Settings → Authorized domains* → добавить домен сайта (`имя.github.io`).
+3. *Firestore Database* → **Create database**.
+4. *Firestore → Rules* → вставить **весь** файл `firestore.rules` → **Publish**. (После каждого обновления проекта правила нужно публиковать заново.)
+5. Загрузить **содержимое** проекта в **корень** репозитория (не саму папку!), включая файл `.nojekyll`.
+6. GitHub → *Settings → Pages* → *Deploy from a branch* → `main` / `/ (root)`.
+7. Открыть `адрес-сайта/health.html` — страница сама проверит файлы, Firebase и кэш. Все строки должны быть зелёными.
 
-## Notes
-- This migration does not automatically copy old Supabase users or posts. Old Supabase data remains in Supabase unless you export/migrate it separately.
-- Firestore may require a composite index for a query. If Firebase shows a `create index` link in the console, open it and create the suggested index.
-- Never add Firebase Admin SDK/service account secrets to GitHub Pages.
-- Firebase free plan has usage quotas. Review current limits in Firebase documentation.
-- Verify registration, sign-in, posting, and comments on the deployed site after configuring the Firebase project. The package cannot be connected to your Firebase project until you provide your own web app config in `config.js`.
+Настройки Firebase лежат в `config.js` (публичные, это нормально). Секретные ключи в файлы сайта **не** класть.
 
+## 2. Страницы
 
-## Firebase configuration
+| Файл | Что это |
+|---|---|
+| `index.html` | Каталог: поиск, фильтры, сортировка по рейтингу, сравнение до 3 (Premium: 6), подбор инструмента, избранное |
+| `tool.html?id=…` | Страница сервиса: описание, оценка ★, избранное, посты и комментарии сообщества, похожие |
+| `feed.html` | Лента: каналы, подписки, хэштеги, лайки, комментарии, редактирование постов (Premium) |
+| `messages.html` | Личные сообщения в реальном времени |
+| `leaderboard.html` | Рейтинг участников (неделя/месяц/всё время) и инструментов, уровни и достижения |
+| `profile.html?uid=…` | Публичный профиль: аватар, bio, избранное, достижения, оценки, Insights (Premium) |
+| `premium.html` | Тарифы Premium |
+| `suggest.html` | Предложить сервис в каталог |
+| `account.html` | Вход, регистрация, сброс пароля |
+| `health.html` | Самодиагностика (не индексируется) |
+| `community.html` | Редирект на `feed.html` (старая ссылка) |
+| `404.html` | Страница ошибки; сама исправляет `/feed` → `/feed.html` |
 
-`config.js` is populated with the Firebase Web App configuration for project `syntix-b5c57`. Firestore rules are in `firestore.rules`; publish them in Firebase Console → Firestore Database → Rules.
+Скрипты: `app.js` (каталог), `tool*.js`, `feed.js`, `messages.js`, `leaderboard.js`, `profile.js`, `suggest.js`, `account.js`, `core.js` (общие функции ленты), `gamify.js` (очки, уровни, достижения), `premium*.js`, `ratings.js`, `badge.js` (счётчик непрочитанных), `ui.js` (уведомления, нижняя панель, сервис-воркер), `nav-auth.js`, `favorites.js`.
+Стили: `styles.css` (исходный дизайн), `profile.css`, `social.css`. PWA: `manifest.json`, `sw.js`, иконки `icon-*.png`.
 
+## 3. Данные Firestore
 
-## Profiles (public)
-- `profile.html` + `profile.js` + `profile.css`: public profile at `profile.html?uid=<uid>`; own profile at `profile.html` (needs sign-in).
-- Data: `profiles/{uid}` (displayName, bio, avatar, showFavorites, lang, createdAt, updatedAt) and `profiles/{uid}/favorites/{toolSlug}`.
-- Avatar is resized in the browser to 160×160 JPEG and stored as a data URL inside the profile document (no Firebase Storage needed).
-- Favorites: heart button on `tool.html` (`favorites.js`). Visible to others only when the owner enables it in settings.
-- Activity tab lists the user's posts and comments (simple `where uid ==` queries, no composite index needed).
-- `nav-auth.js` turns the "Войти" button into "Профиль" when signed in.
-- **Republish `firestore.rules`** (Firestore → Rules → Publish) after uploading these files.
+| Коллекция | Кто пишет | Заметки |
+|---|---|---|
+| `profiles/{uid}` (+ `favorites`, `joined`, `following`) | владелец | профиль публичный; `joined`/`following` видит только владелец |
+| `community_posts`, `community_comments`, `tool_comments` | вошедшие | автор удаляет своё; владелец канала — посты в своём канале |
+| `channels` | вошедшие | режимы: «пишут все» / «пишет только владелец» |
+| `post_likes`, `tool_ratings` | вошедшие | id документа = `<объект>_<uid>` (одна запись на человека) |
+| `dm_threads/{uidA_uidB}/messages` | участники диалога | читают только двое; получатель может отключить ЛС в профиле |
+| `reports` | вошедшие | только запись; читаешь ты в консоли |
+| `tool_suggestions` | вошедшие | автор видит своё; ты читаешь всё в консоли |
+| `premium/{uid}` | **никто из клиента** | `{ until: timestamp, plan }`; пишет владелец сайта или вебхук |
 
-## Site improvements (v2)
-- **Catalog:** hearts now sync with Firestore when signed in (guests stay on localStorage; first login merges both). New "♥ Избранное" filter, `/` focuses search, `?cat=code&q=chat` deep links, category tag on tool pages links to the filtered catalog.
-- **Comparison table** (`#comparison`) restored on the home page and added to the nav.
-- **Tool pages:** "Similar tools" block (same category).
-- **Community:** authors can delete their own posts/comments; comment loading uses one `in` query per 10 posts instead of one per post; tool discussions sorted client-side. **No composite indexes are required anymore.**
-- **Account:** password reset ("Забыли пароль?"), specific error messages, signed-in users are redirected to their profile.
-- **Rules:** `firestore.rules` validates fields and lengths for posts, comments, profiles and favorites. Republish after upload.
-- Favicon added to all pages; Open Graph tags on the home page.
+Индексы Firestore создавать не нужно.
 
-## v3
-- **Ratings:** 1–5 stars on each tool page (`tool-rating.js`, collection `tool_ratings`, one rating per user, click the same star to remove). Average and count are visible to everyone. Needs republished `firestore.rules`.
-- **Compare drawer:** ⚖ button on every catalog card, pick 2–3 tools and open a side-by-side table.
-- **Search:** multi-word matching ("code chat"), `Esc` clears the search field.
-- **Shared UI (`ui.js`):** toast notifications, "skip to content" link, Share button on tool pages.
-- **Accessibility:** visible focus rings, `aria-live` result counter, reduced-motion support.
+## 4. Premium 💎
 
-## v4
-- **Likes** on community posts (`post_likes`), **reports** on posts/comments (`reports`, write-only: review them in Firebase Console → Firestore → `reports`; each report holds the collection name and document id).
-- **Suggest a tool:** `suggest.html` writes to `tool_suggestions` (readable only by its author; you read all of them in the Console). Linked from the home page footer.
-- **Tool pages:** latest community posts about the tool (`tool-posts.js`).
-- **Profile:** new "Ratings" tab.
-- Republish `firestore.rules` after uploading.
+Привилегии проверяются самими правилами Firestore (`isPremium()`): длинные посты (15 000 символов), редактирование своих постов, акцентный цвет профиля. Остальное: значок 💎 и золотая рамка, сравнение до 6 инструментов, Insights, экспорт избранного в CSV, достижение «Меценат».
 
-## v5 — Feed, channels, direct messages
-- **`community.html` is now a redirect** to the new **`feed.html`** (delete the old `community.js` from your repo, it is no longer used). Old posts/comments/likes stay: they use the same collections.
-- **Channels:** create your own (name, description, icon, "anyone can post" or "owner-only"), follow/unfollow, share link, owner can delete the channel and any post inside it. Collections: `channels`, `profiles/{uid}/joined`, posts carry `channelId`.
-- **Direct messages:** `messages.html` — real-time chats (`dm_threads/{uidA_uidB}/messages`). Open a chat via the ✉ button under a post or on a member profile (`messages.html?to=<uid>`). Members can switch DMs off in profile settings (`allowDms`); unread dots are tracked per device.
-- **Feed UI:** avatars, relative time, likes, inline comments, sort (latest/top), search, load-more, tool and channel pills.
-- **Shared helpers:** `core.js` (profiles cache, avatars, time, links). Styles in `social.css`.
-- **Republish `firestore.rules`** — it was rewritten (channels, DMs, new post fields).
+**Настройка оплаты** (любой один способ):
+1. У платёжного провайдера (например, Stripe → Payment Links) создай две **повторяющиеся** цены (месяц/год). Впиши ссылки и цены в `premium-config.js`. Сайт добавит к ссылке `?client_reference_id=<uid>&prefilled_email=<email>`.
+2. **Вручную:** после платежа найди ID пользователя в кабинете провайдера и в Firebase Console → Firestore → коллекция `premium` создай документ с этим ID и полями `until` (тип **timestamp**) и `plan` (строка).
+3. **Автоматически** (нужен тариф Blaze): папка `functions/` — вебхук Stripe. `firebase functions:secrets:set STRIPE_SECRET_KEY`, `…STRIPE_WEBHOOK_SECRET`, затем `firebase deploy --only functions,firestore:rules`; адрес функции добавить в Stripe для событий `checkout.session.completed` и `invoice.paid`. Сначала проверь в тестовом режиме.
 
-## v6 — Leaderboard, levels, achievements
-- **`leaderboard.html`:** top members (week / month / all time, podium + list, "your rank" card) and top tools (Bayesian-weighted average rating). Includes the XP rules and the full achievements catalog.
-- **Levels & achievements (`gamify.js`):** XP = post 10, comment 3, like on your post 2, tool rating 2, own channel 15. 13 achievements (first post, writer, critic, founder, 3/7-day streaks, complete profile…). Shown on every profile (🏆 Achievements tab + level badge); the owner gets a toast when a new one unlocks.
-- **Nothing is stored:** scores are derived from public data (posts, comments, likes, ratings, channels), so they cannot be edited. Anti-abuse: max 5 posts and 10 comments per day count, self-likes are ignored.
-- **Cost:** the leaderboard reads ~2,000 documents per refresh; the result is cached in the browser for 15 minutes. For a large audience move this to a scheduled Cloud Function that writes a `leaderboard` document.
-- No new Firestore rules are needed (only public reads).
+Юридические тексты (оферта, возвраты, налоги) оформляются отдельно.
 
-## v7
-- **Tool finder** on the home page (🎯): pick tasks, get the 4 best matches, optionally weighted by community rating.
-- **Ratings on catalog cards** + sort "По рейтингу" (`ratings.js`, cached 30 min).
-- **Unread DM badge** on the Messages tab/link and in the page title (`badge.js`).
-- **Following:** follow people (profile + feed) and channels; "Подписки" tab in the feed (`profiles/{uid}/following`, private). Republish `firestore.rules`.
-- **Feed:** clickable #hashtags + trending tags row, inline previews for direct https image links, draft autosave, Ctrl/Cmd+Enter to publish.
-- **PWA:** installable on phones (`manifest.json`, `sw.js`, icons). Network-first, so updates always win.
+## 5. Как считаются очки
+Пост +10, комментарий +3, лайк на свой пост +2, оценка сервиса +2, свой канал +15. Очки считаются из публичных данных и нигде не хранятся, поэтому подделать их нельзя. В день учитывается не больше 5 постов и 10 комментариев, лайки самому себе не считаются. Рейтинг читает ~2000 документов и кэшируется в браузере на 15 минут.
 
-### Installing the app / icon troubleshooting
-- Upload **all** of: `manifest.json`, `sw.js`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png` (binary PNGs are easy to miss). Check that `https://<your-site>/icon-192.png` opens in a browser.
-- The old `manifest.webmanifest` is replaced by `manifest.json` — delete the old file.
-- The OS stores the icon at install time: **remove the already installed app and install again** after deploying.
+## 6. Если что-то не работает
+* Открой `health.html`. Красные строки — не хватает файла; жёлтые — на сайте старая версия файла; `permission-denied` — опубликуй свежий `firestore.rules`.
+* Иконка приложения: загрузи все `icon-*.png` и `manifest.json`, удали установленное приложение и установи заново.
+* **Не копируй код из чата** — теряются символы. Скачивай файлы или бери архив.
+
+## 7. Что не входит
+Модерация с ролями, email-уведомления и подтверждение почты требуют серверной части (Cloud Functions / Blaze). Карта сайта `sitemap.xml` требует знать точный адрес сайта.

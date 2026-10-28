@@ -1,4 +1,4 @@
-/* Syntix shared helpers (feed + messages) */
+// Syntix shared helpers (feed + messages)
 (() => {
   const C = (window.Syntix = {});
   C.esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

@@ -1,6 +1,6 @@
-/* Syntix Premium — Stripe webhook (OPTIONAL, requires the Firebase Blaze plan).
-   Grants / extends premium/{uid} = { until, plan, subscriptionId } after a successful payment.
-   Supports SUBSCRIPTION prices (monthly / yearly Payment Links). Not load-tested: try it in Stripe test mode first. */
+// Syntix Premium — Stripe webhook (OPTIONAL, requires the Firebase Blaze plan).
+// Grants / extends premium/{uid} = { until, plan, subscriptionId } after a successful payment.
+// Supports SUBSCRIPTION prices (monthly / yearly Payment Links). Not load-tested: try it in Stripe test mode first.
 const { onRequest } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');

@@ -1,4 +1,4 @@
-/* Unread direct-message badge (tab bar, top nav, page title) */
+// Unread direct-message badge (tab bar, top nav, page title)
 (() => {
   const cfg = window.SYNTIX_CONFIG?.firebase;
   if (!cfg || !cfg.apiKey || cfg.apiKey.startsWith('PASTE_') || !window.firebase || !firebase.firestore || !firebase.auth) return;
