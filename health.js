@@ -14,7 +14,7 @@ const FILES = {
   'premium-config.js': 'SYNTIX_PREMIUM', 'ratings.js': 'syntix-rt-v1', 'nav-auth.js': 'navAuth', 'favorites.js': 'favBtn', 'tool.js': 'related', 'tool-rating.js': 'tool_ratings',
   'tool-posts.js': 'toolPosts', 'tool-community.js': 'data-report', 'suggest.js': 'tool_suggestions', 'account.js': 'sendPasswordResetEmail', 'config.js': 'SYNTIX_CONFIG',
   'styles.css': '', 'social.css': 'podium', 'profile.css': 'prem-card', 'tools.json': 'ChatGPT', 'manifest.json': 'maskable', 'sw.js': 'syntix-v2',
-  '404.html': 'KNOWN', 'robots.txt': 'User-agent', 'icon-192.png': null, 'icon-512.png': null, 'icon-maskable-512.png': null, 'apple-touch-icon.png': null
+  'notifications.html': 'markAll', 'notifications.js': 'notifications', 'admin.html': 'noindex', 'admin.js': 'admins', 'scripts/sync.js': 'syncPremium', 'scripts/package.json': 'firebase-admin', '404.html': 'KNOWN', 'robots.txt': 'User-agent', 'icon-192.png': null, 'icon-512.png': null, 'icon-maskable-512.png': null, 'apple-touch-icon.png': null
 };
 
 async function checkFiles() {
@@ -43,7 +43,7 @@ async function checkFirebase() {
   add('ok', 'Настройки Firebase найдены', cfg.projectId);
   try { if (!firebase.apps.length) firebase.initializeApp(cfg); } catch (e) { add('bad', 'Firebase не инициализировался', e.message); return; }
   const db = firebase.firestore();
-  const cols = ['community_posts', 'channels', 'profiles', 'tool_ratings', 'post_likes', 'premium'];
+  const cols = ['community_posts', 'channels', 'profiles', 'tool_ratings', 'post_likes', 'premium', 'stats'];
   let denied = 0;
   for (const c of cols) {
     try { await db.collection(c).limit(1).get(); add('ok', `Чтение «${c}» разрешено`); }

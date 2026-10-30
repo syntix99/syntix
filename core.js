@@ -44,6 +44,17 @@
     return urls.length ? `<div class="media">${urls.map(u => `<a href="${C.esc(u)}" target="_blank" rel="noopener noreferrer nofollow"><img src="${C.esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer"></a>`).join('')}</div>` : '';
   };
 
+  // drop a verified notification into another user's inbox (rules check that the action really happened)
+  C.notify = (toUid, nid, d) => {
+    const u = C.auth && C.auth.currentUser;
+    if (!u || !toUid || toUid === u.uid) return Promise.resolve();
+    const name = ((C.P.get(u.uid) && C.P.get(u.uid).displayName) || u.displayName || (u.email || '').split('@')[0] || 'Syntix').slice(0, 100);
+    return C.db.collection('notifications').doc(toUid).collection('items').doc(nid).set({
+      type: d.type, fromUid: u.uid, fromName: name, postId: d.postId || '', commentId: d.commentId || '',
+      snippet: String(d.snippet || '').slice(0, 120), read: false, createdAt: C.now()
+    }).catch(e => console.warn('notify', e));
+  };
+
   // ---- public profile cache ----
   C.P = new Map();
   C.loadProfiles = async uids => {

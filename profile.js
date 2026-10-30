@@ -145,6 +145,12 @@ function paintFollow(btn, on) {
   btn.className = 'btn ' + (on ? 'ghost' : 'primary');
   btn.style.display = '';
 }
+function notifyFollow() {
+  const name = (me.displayName || (me.email || '').split('@')[0] || 'Syntix').slice(0, 100);
+  return db.collection('notifications').doc(uid).collection('items').doc('follow_' + me.uid).set({
+    type: 'follow', fromUid: me.uid, fromName: name, postId: '', commentId: '', snippet: '', read: false, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(() => {});
+}
 async function loadFollow(btn) {
   const ref = db.collection('profiles').doc(me.uid).collection('following').doc(uid);
   try { paintFollow(btn, (await ref.get()).exists); } catch (e) { console.warn('follow', e); paintFollow(btn, false); }
@@ -152,7 +158,7 @@ async function loadFollow(btn) {
     btn.disabled = true;
     try {
       if (btn.dataset.on) { await ref.delete(); paintFollow(btn, false); }
-      else { await ref.set({ uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); paintFollow(btn, true); }
+      else { await ref.set({ uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); paintFollow(btn, true); notifyFollow(); }
     } catch (e) { console.error(e); if (window.toast) toast(t('fail')); }
     btn.disabled = false;
   };

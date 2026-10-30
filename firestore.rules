@@ -12,6 +12,68 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/premium/$(uid)).data.until > request.time;
     }
 
+    // Admins are created by hand in the Console: collection `admins`, document id = user uid, any field.
+    function isAdmin() {
+      return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    // Banned users (written by admins) cannot publish anything.
+    function notBanned() {
+      return !exists(/databases/$(database)/documents/bans/$(request.auth.uid));
+    }
+
+    match /admins/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+    match /bans/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if isAdmin();
+    }
+    // Precomputed leaderboard / ratings written by the GitHub Actions sync (Admin SDK); clients only read.
+    match /stats/{doc} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // In-app notifications: a user may drop a notification into another user's inbox ONLY if the
+    // underlying action really happened (comment / like / follow exists) and concerns the recipient.
+    match /notifications/{uid}/items/{nid} {
+      allow read: if isOwner(uid);
+      allow delete: if isOwner(uid);
+      allow update: if isOwner(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+        && request.resource.data.read == true;
+      allow create: if signedIn() && notBanned()
+        && uid != request.auth.uid
+        && request.resource.data.keys().hasOnly(['type', 'fromUid', 'fromName', 'postId', 'commentId', 'snippet', 'read', 'createdAt'])
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.read == false
+        && request.resource.data.createdAt == request.time
+        && str(request.resource.data.fromName, 1, 100)
+        && str(request.resource.data.snippet, 0, 120)
+        && str(request.resource.data.postId, 0, 100)
+        && str(request.resource.data.commentId, 0, 100)
+        && (
+          (request.resource.data.type == 'comment'
+            && nid == 'comment_' + request.resource.data.commentId
+            && exists(/databases/$(database)/documents/community_comments/$(request.resource.data.commentId))
+            && get(/databases/$(database)/documents/community_comments/$(request.resource.data.commentId)).data.uid == request.auth.uid
+            && get(/databases/$(database)/documents/community_comments/$(request.resource.data.commentId)).data.postId == request.resource.data.postId
+            && exists(/databases/$(database)/documents/community_posts/$(request.resource.data.postId))
+            && get(/databases/$(database)/documents/community_posts/$(request.resource.data.postId)).data.uid == uid)
+          ||
+          (request.resource.data.type == 'like'
+            && nid == 'like_' + request.resource.data.postId + '_' + request.auth.uid
+            && exists(/databases/$(database)/documents/post_likes/$(request.resource.data.postId + '_' + request.auth.uid))
+            && exists(/databases/$(database)/documents/community_posts/$(request.resource.data.postId))
+            && get(/databases/$(database)/documents/community_posts/$(request.resource.data.postId)).data.uid == uid)
+          ||
+          (request.resource.data.type == 'follow'
+            && nid == 'follow_' + request.auth.uid
+            && exists(/databases/$(database)/documents/profiles/$(request.auth.uid)/following/$(uid)))
+        );
+    }
+
     match /premium/{uid} {
       allow read: if true;
       allow write: if false;   // written only by the site owner (Console) or the Stripe webhook (Admin SDK)
@@ -98,19 +160,19 @@ service cloud.firestore {
           && str(d.ownerName, 1, 100);
       }
       allow read: if true;
-      allow create: if signedIn() && validChannel()
+      allow create: if signedIn() && notBanned() && validChannel()
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.createdAt == request.time;
       allow update: if signedIn() && resource.data.ownerUid == request.auth.uid && validChannel()
         && request.resource.data.ownerUid == resource.data.ownerUid
         && request.resource.data.createdAt == resource.data.createdAt;
-      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+      allow delete: if (signedIn() && resource.data.ownerUid == request.auth.uid) || isAdmin();
     }
 
     // ---------- Feed posts (optionally inside a channel) ----------
     match /community_posts/{id} {
       allow read: if true;
-      allow create: if signedIn()
+      allow create: if signedIn() && notBanned()
         && request.resource.data.keys().hasOnly(['title', 'body', 'toolName', 'channelId', 'uid', 'authorName', 'createdAt'])
         && request.resource.data.uid == request.auth.uid
         && str(request.resource.data.title, 0, 120)
@@ -128,31 +190,33 @@ service cloud.firestore {
         && request.resource.data.editedAt == request.time
         && isPremium(request.auth.uid);
       // the author, or the owner of the channel the post lives in
-      allow delete: if isOwner(resource.data.uid) || isChannelOwner(resource.data.get('channelId', ''));
+      allow delete: if isOwner(resource.data.uid) || isChannelOwner(resource.data.get('channelId', '')) || isAdmin();
     }
 
     match /community_comments/{id} {
       allow read: if true;
-      allow create: if signedIn()
+      allow create: if signedIn() && notBanned()
         && request.resource.data.keys().hasOnly(['postId', 'body', 'uid', 'authorName', 'createdAt'])
         && request.resource.data.uid == request.auth.uid
         && str(request.resource.data.postId, 1, 100)
         && str(request.resource.data.body, 1, 3000)
         && str(request.resource.data.authorName, 1, 100)
         && request.resource.data.createdAt == request.time;
-      allow update, delete: if isOwner(resource.data.uid);
+      allow update: if isOwner(resource.data.uid);
+      allow delete: if isOwner(resource.data.uid) || isAdmin();
     }
 
     match /tool_comments/{id} {
       allow read: if true;
-      allow create: if signedIn()
+      allow create: if signedIn() && notBanned()
         && request.resource.data.keys().hasOnly(['toolName', 'body', 'uid', 'authorName', 'createdAt'])
         && request.resource.data.uid == request.auth.uid
         && str(request.resource.data.toolName, 1, 80)
         && str(request.resource.data.body, 1, 3000)
         && str(request.resource.data.authorName, 1, 100)
         && request.resource.data.createdAt == request.time;
-      allow update, delete: if isOwner(resource.data.uid);
+      allow update: if isOwner(resource.data.uid);
+      allow delete: if isOwner(resource.data.uid) || isAdmin();
     }
 
     // ---------- Tool ratings (doc id = <toolSlug>_<uid>) ----------
@@ -184,7 +248,7 @@ service cloud.firestore {
 
     // ---------- Reports: write-only, review in the Firebase Console ----------
     match /reports/{rid} {
-      allow read: if false;
+      allow read: if isAdmin();
       allow create, update: if signedIn()
         && request.resource.data.keys().hasOnly(['col', 'docId', 'uid', 'createdAt'])
         && request.resource.data.uid == request.auth.uid
@@ -192,12 +256,13 @@ service cloud.firestore {
         && str(request.resource.data.docId, 1, 100)
         && rid == request.resource.data.col + '_' + request.resource.data.docId + '_' + request.auth.uid
         && request.resource.data.createdAt == request.time;
-      allow delete: if false;
+      allow delete: if isAdmin();
     }
 
     // ---------- Tool suggestions ----------
     match /tool_suggestions/{sid} {
-      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow delete: if isAdmin();
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(['name', 'url', 'category', 'note', 'uid', 'createdAt'])
         && request.resource.data.uid == request.auth.uid
@@ -219,6 +284,7 @@ service cloud.firestore {
           && request.auth.uid in d.participants
           && str(d.lastMessage, 0, 200)
           && d.lastSender == request.auth.uid
+          && notBanned()
           && d.lastAt == request.time;
       }
       // the recipient can switch DMs off in their profile (applies to new conversations)

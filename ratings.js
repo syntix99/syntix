@@ -7,6 +7,14 @@
       const cfg = window.SYNTIX_CONFIG?.firebase;
       if (!cfg || !window.firebase || !firebase.firestore) return {};
       if (!firebase.apps.length) firebase.initializeApp(cfg);
+      try {
+        const pre = await firebase.firestore().collection('stats').doc('ratings').get();
+        if (pre.exists && pre.data().r) {
+          const r = pre.data().r;
+          try { localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), r })); } catch {  }
+          return r;
+        }
+      } catch (e) { console.warn('stats/ratings', e); }
       const snap = await firebase.firestore().collection('tool_ratings').orderBy('updatedAt', 'desc').limit(600).get();
       const m = {};
       snap.docs.forEach(d => { const x = d.data(), a = m[x.toolSlug] || (m[x.toolSlug] = { n: 0, sum: 0 }); a.n++; a.sum += x.value; });

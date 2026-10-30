@@ -219,7 +219,7 @@ async function toggleFollow(uid) {
   const ref = db.collection('profiles').doc(me.uid).collection('following').doc(uid);
   try {
     if (following.has(uid)) { await ref.delete(); following.delete(uid); }
-    else { await ref.set({ uid, createdAt: C.now() }); following.add(uid); }
+    else { await ref.set({ uid, createdAt: C.now() }); following.add(uid); C.notify(uid, 'follow_' + me.uid, { type: 'follow' }); }
   } catch (e) { console.error(e); C.toast(t('failed')); return; }
   if (scope === 'following' && !following.has(uid)) loadPosts(true); else renderFeed();
 }
@@ -243,7 +243,11 @@ async function toggleLike(id, btn) {
   btn.disabled = true;
   try {
     if (s.mine) { await ref.delete(); s.mine = false; s.n = Math.max(0, s.n - 1); }
-    else { await ref.set({ postId: id, uid: me.uid, createdAt: C.now() }); s.mine = true; s.n++; }
+    else {
+      await ref.set({ postId: id, uid: me.uid, createdAt: C.now() }); s.mine = true; s.n++;
+      const post = posts.find(x => x.id === id);
+      if (post) C.notify(post.uid, 'like_' + id + '_' + me.uid, { type: 'like', postId: id, snippet: post.title || post.body });
+    }
   } catch (e) { console.error(e); C.toast(t('failed')); }
   repaintPost(id);
 }
@@ -345,7 +349,9 @@ document.addEventListener('submit', async e => {
     const input = f.elements.body, body = input.value.trim(), postId = f.dataset.post; if (!body) return;
     input.disabled = true;
     try {
-      await db.collection('community_comments').add({ postId, body, uid: me.uid, authorName: myName(), createdAt: C.now() });
+      const cref = await db.collection('community_comments').add({ postId, body, uid: me.uid, authorName: myName(), createdAt: C.now() });
+      const target = posts.find(x => x.id === postId);
+      if (target) await C.notify(target.uid, 'comment_' + cref.id, { type: 'comment', postId, commentId: cref.id, snippet: body });
       await reloadComments(postId);
     } catch (err) { console.error(err); C.toast(t('failed')); input.disabled = false; }
   } else if (f.classList.contains('editform')) {

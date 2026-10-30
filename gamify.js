@@ -66,7 +66,7 @@
 
   function achievements(stats, extra = {}) {
     const s = stats || empty();
-    const x = { streak: streakOf(s.days), profileComplete: !!extra.profileComplete, premium: !!extra.premium };
+    const x = { streak: typeof s.streak === 'number' ? s.streak : streakOf(s.days), profileComplete: !!extra.profileComplete, premium: !!extra.premium };
     return ACH.map(a => { const v = a.val(s, x); return { ...a, v: Math.min(v, a.goal), done: v >= a.goal }; });
   }
 

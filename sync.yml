@@ -1,0 +1,29 @@
+name: Syntix sync
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'      # every 15 minutes (GitHub may delay runs by a few minutes)
+  workflow_dispatch:            # lets you press "Run workflow" manually
+
+concurrency:
+  group: syntix-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        working-directory: scripts
+        run: npm install --no-audit --no-fund
+      - name: Sync leaderboard, ratings and premium
+        working-directory: scripts
+        run: node sync.js
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
