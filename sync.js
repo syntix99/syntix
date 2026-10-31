@@ -7,7 +7,7 @@
 // Optional env: STATS_MIN_INTERVAL_MIN (default 120) keeps Firestore reads inside the free quota.
 const path = require('path');
 global.window = global.window || {};
-require(path.join(__dirname, '..', 'gamify.js'));          // same scoring code as the website
+require(path.join(__dirname, 'gamify.js'));          // same scoring code as the website
 const G = global.window.Gamify;
 
 const MIN = 60000, DAY = 86400000;
@@ -51,7 +51,13 @@ async function syncStats(db, admin) {
   if (meta.t && Date.now() - meta.t < minGap) { log('stats: refreshed recently, skipping'); return false; }
   // cheap change detection: 6 single-document reads
   const marks = {};
-  for (const col of Object.keys(CAPS)) marks[col] = await newest(db, col);
+  for (const col of Object.keys(CAPS)) {
+    const countSnap = await db.collection(col).count().get();
+    marks[col] = {
+      newest: await newest(db, col),
+      count: countSnap.data().count
+    };
+  }
   if (meta.t && JSON.stringify(marks) === JSON.stringify(meta.marks || {})) { log('stats: nothing new since last run'); return false; }
   const get = async col => (await db.collection(col).orderBy(ORDER[col], 'desc').limit(CAPS[col]).get()).docs;
   const rows = { posts: await get('community_posts'), comments: await get('community_comments'), tcomments: await get('tool_comments'), ratings: await get('tool_ratings'), channels: await get('channels'), likes: await get('post_likes') };

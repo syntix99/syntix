@@ -202,7 +202,10 @@ service cloud.firestore {
         && str(request.resource.data.body, 1, 3000)
         && str(request.resource.data.authorName, 1, 100)
         && request.resource.data.createdAt == request.time;
-      allow update: if isOwner(resource.data.uid);
+      allow update: if isOwner(resource.data.uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'editedAt'])
+        && str(request.resource.data.body, 1, 3000)
+        && (!('editedAt' in request.resource.data) || request.resource.data.editedAt == request.time);
       allow delete: if isOwner(resource.data.uid) || isAdmin();
     }
 
@@ -215,7 +218,10 @@ service cloud.firestore {
         && str(request.resource.data.body, 1, 3000)
         && str(request.resource.data.authorName, 1, 100)
         && request.resource.data.createdAt == request.time;
-      allow update: if isOwner(resource.data.uid);
+      allow update: if isOwner(resource.data.uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'editedAt'])
+        && str(request.resource.data.body, 1, 3000)
+        && (!('editedAt' in request.resource.data) || request.resource.data.editedAt == request.time);
       allow delete: if isOwner(resource.data.uid) || isAdmin();
     }
 

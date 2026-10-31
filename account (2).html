@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <title>Аккаунт — Syntix.ai</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="nav">
+      <a class="logo" href="./">syntix<span>.ai</span></a>
+      <nav class="links" aria-label="Основная навигация">
+        <a href="./tools.html">Каталог ИИ</a>
+        <a href="./compare.html">Сравнения</a>
+        <a href="../en/account.html">English</a>
+      </nav>
+    </header>
+    <main class="section">
+      <section class="card auth-card">
+        <h1>Аккаунт Syntix.ai</h1>
+        <p class="muted">Создайте аккаунт или войдите, чтобы пользоваться Syntix с разных устройств.</p>
+        <div id="signed-in-panel" hidden>
+          <p>Вы вошли как <strong id="user-email"></strong></p>
+          <button class="btn" id="logout" type="button">Выйти</button>
+        </div>
+        <form id="auth-form" class="auth-form">
+          <div class="auth-modes">
+            <label><input type="radio" name="mode" value="signup" checked> Регистрация</label>
+            <label><input type="radio" name="mode" value="login"> Вход</label>
+          </div>
+          <label>Email
+            <input id="email" type="email" required autocomplete="email" placeholder="you@example.com">
+          </label>
+          <label>Пароль (не менее 8 символов)
+            <input id="password" type="password" required minlength="8" autocomplete="new-password" placeholder="Не менее 8 символов">
+          </label>
+          <button class="btn" id="submit-auth" type="submit">Создать аккаунт</button>
+        </form>
+        <p id="auth-message" role="status" aria-live="polite"></p>
+        <p class="note">При регистрации может потребоваться подтвердить email. Используйте уникальный пароль. Syntix.ai никогда не попросит прислать пароль в поддержку.</p>
+      </section>
+    </main>
+    <footer class="footer">© 2026 Syntix.ai</footer>
+  </div>
+  <script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script defer src="../config.js"></script>
+  <script defer src="../localized-account.js"></script>
+</body>
+</html>

@@ -90,3 +90,11 @@ Spark: **50 000 чтений, 20 000 записей, 20 000 удалений в 
 
 ## 10. Чего здесь нет
 Email-уведомления, подтверждение почты и загрузка картинок в посты требуют серверной части или платного хранилища. Карта сайта `sitemap.xml` требует точного адреса сайта.
+
+## Repository maintenance notes
+
+- The scheduled sync workflow is stored at `.github/workflows/sync.yml` and runs `node sync.js` from the repository root.
+- Configure the `FIREBASE_SERVICE_ACCOUNT` GitHub Actions secret before expecting scheduled statistics synchronization to run. `STRIPE_SECRET_KEY` is optional and only enables the Stripe polling portion. The optional Stripe webhook is isolated in `functions/` with its own dependencies; configure `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` using Firebase Functions secrets before deploying it. Choose either webhook-based updates or scheduled Stripe polling as the primary subscription sync path to avoid unnecessary duplicate processing.
+- The English and Russian account pages now use the same Firebase Authentication project as the main account page. Existing accounts that were created only in the former Supabase Auth project are not automatically migrated; migrate those users deliberately before switching production traffic.
+- Firestore comment edits are restricted to the comment body and edit timestamp. Deploy the updated rules with `firebase deploy --only firestore:rules`. The optional webhook can be deployed with `firebase deploy --only functions` after setting its secrets.
+- The precomputed leaderboard still intentionally has collection scan caps in `sync.js`; it is not yet an all-records analytics pipeline. The sync change detector now compares newest timestamps and collection counts, so ordinary deletions are detected, but changes to older records that preserve collection counts and do not update the ordered timestamp can still require a manual full rebuild. Review scan limits and Firestore costs before growing the dataset.
