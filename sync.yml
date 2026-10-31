@@ -19,8 +19,10 @@ jobs:
         with:
           node-version: 20
       - name: Install dependencies
+        working-directory: scripts
         run: npm install --no-audit --no-fund
       - name: Sync leaderboard, ratings and premium
+        working-directory: scripts
         run: node sync.js
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
