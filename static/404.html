@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090b13"><meta name="robots" content="noindex"><title>404 — Syntix</title>
+<style>
+html,body{height:100%}body{margin:0;display:grid;place-items:center;background:#090b13;color:#e8eaf4;font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-align:center;padding:24px;box-sizing:border-box}
+.box{max-width:420px}.code{font-size:84px;font-weight:700;letter-spacing:-4px;margin:0;background:linear-gradient(90deg,#b7a2ff,#65e5d1);-webkit-background-clip:text;background-clip:text;color:transparent}
+h1{font-size:22px;margin:4px 0 8px}p{color:#9da2b8;margin:0 0 22px}
+a{display:inline-block;margin:4px;padding:11px 20px;border-radius:12px;background:linear-gradient(135deg,#8f78ff,#6f55ee);color:#fff;text-decoration:none;font-weight:600}
+a.g{background:#0f121d;border:1px solid #ffffff1c;color:#cbbdff}
+</style></head>
+<body><div class="box"><p class="code">404</p><h1 id="t">Такой страницы нет</h1><p id="d">Возможно, ссылка устарела или в адресе опечатка.</p><a id="home" href="./index.html">На главную</a><a class="g" id="feed" href="./feed.html">В ленту</a></div>
+<script>
+(function(){
+  var KNOWN=['index','feed','messages','leaderboard','profile','tool','suggest','account','premium','health'];
+  var path=location.pathname.replace(/\/+$/,''), seg=path.split('/').pop(), base=path.slice(0,path.length-seg.length);
+  if(KNOWN.indexOf(seg)>-1){location.replace(base+seg+'.html'+location.search+location.hash);return}   // /feed -> /feed.html
+  if(seg==='community'){location.replace(base+'feed.html');return}
+  document.getElementById('home').href=base+'index.html';document.getElementById('feed').href=base+'feed.html';
+  if((localStorage.getItem('syntix-lang')||'ru')==='en'){document.documentElement.lang='en';document.getElementById('t').textContent='Page not found';document.getElementById('d').textContent='The link may be outdated or the address has a typo.';document.getElementById('home').textContent='Home';document.getElementById('feed').textContent='Open the feed'}
+})();
+</script></body></html>

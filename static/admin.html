@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090b13"><meta name="robots" content="noindex"><link rel="manifest" href="./manifest.json"><link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=2"><link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=2">
+<title>Модерация — Syntix</title>
+<link rel="stylesheet" href="./styles.css"><link rel="stylesheet" href="./profile.css"><link rel="stylesheet" href="./social.css">
+<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script defer src="./config.js"></script><script defer src="./core.js"></script><script defer src="./admin.js"></script><script defer src="./ui.js"></script>
+</head>
+<body><div class="glow g1"></div><div class="glow g2"></div>
+<header class="wrap top"><a class="brand" href="./index.html"><b>S</b> syntix<span>.</span></a><nav><a href="./feed.html">Лента</a><a href="./leaderboard.html">Рейтинг</a></nav><div class="actions"><a class="btn ghost" href="./index.html">На сайт</a></div></header>
+<main class="wrap admin-page">
+  <section class="lb-hero"><small>SYNTIX ADMIN</small><h1>🛡 Модерация</h1><p id="who">Проверяем доступ…</p></section>
+  <div class="pills" id="tabs" style="display:none"><button type="button" class="pill-btn active" data-atab="reports" id="tReports">Жалобы</button><button type="button" class="pill-btn" data-atab="suggest" id="tSuggest">Предложения</button><button type="button" class="pill-btn" data-atab="bans" id="tBans">Баны</button></div>
+  <div id="panel"></div>
+</main>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090b13"><link rel="manifest" href="./manifest.json"><link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=2"><link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=2"><meta name="apple-mobile-web-app-title" content="Syntix"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="Лента Syntix: каналы, посты, обсуждения AI-инструментов и личные сообщения.">
+<title>Лента — Syntix</title>
+<link rel="stylesheet" href="./styles.css"><link rel="stylesheet" href="./profile.css"><link rel="stylesheet" href="./social.css">
+<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script defer src="./config.js"></script><script defer src="./premium.js"></script><script defer src="./core.js"></script><script defer src="./nav-auth.js"></script><script defer src="./feed.js"></script><script defer src="./badge.js"></script><script defer src="./ui.js"></script>
+</head>
+<body><div class="glow g1"></div><div class="glow g2"></div>
+<header class="wrap top"><a class="brand" href="./index.html"><b>S</b> syntix<span>.</span></a><nav><a href="./index.html#catalog" data-i="catalog">Каталог</a><a href="./feed.html" data-i="feed">Лента</a><a href="./leaderboard.html" data-i="navTop">Рейтинг</a><a href="./premium.html">💎 Premium</a><a href="./messages.html" data-i="messages">Сообщения</a></nav><div class="actions"><button id="language" type="button">EN</button><a class="btn ghost" href="./account.html" data-i="login">Войти</a></div></header>
+
+<main class="wrap feed-page">
+  <aside class="feed-left">
+    <div class="side-card">
+      <div class="side-head"><small data-i="channels">КАНАЛЫ</small><button type="button" id="newChannel" class="mini-btn" data-i="newChannelShort" title="Создать канал">＋</button></div>
+      <div class="chan-scroll"><button type="button" class="chan active" id="allBtn" data-ch=""><span class="ci">🌐</span><span class="cn" data-i="allPosts">Все посты</span></button><div id="chanList" class="chan-list"></div></div>
+    </div>
+  </aside>
+
+  <section class="feed-center">
+    <div id="chanBanner"></div>
+
+    <div id="signCard" class="compose-card sign" style="display:none">
+      <h3 data-i="signTitle">Есть чем поделиться?</h3><p data-i="signText">Войди или создай бесплатный аккаунт, чтобы публиковать, комментировать и писать в личные сообщения.</p>
+      <a class="btn primary" href="./account.html#signup" data-i="signLink">Войти или зарегистрироваться</a>
+    </div>
+
+    <form id="composeForm" class="compose-card" style="display:none">
+      <div class="compose-row"><div id="cAv"></div>
+        <div class="compose-fields">
+          <input id="cTitle" maxlength="120" data-ph="titlePh" autocomplete="off">
+          <textarea id="cBody" rows="3" maxlength="5000" required data-ph="composePh"></textarea>
+        </div>
+      </div>
+      <div class="compose-bar">
+        <select id="cChan" aria-label="Channel"></select>
+        <select id="cTool" aria-label="Tool"></select>
+        <span class="counter" id="cCount">0 / 5000</span>
+        <button class="btn primary" id="cSubmit" type="submit" data-i="publish">Опубликовать</button>
+      </div>
+    </form>
+    <div id="blockedNote" class="notice" style="display:none" data-i="blocked">Публиковать в этом канале может только его владелец.</div>
+
+    <div class="feed-controls">
+      <div class="pills" id="scopePills" style="display:none"><button type="button" class="pill-btn active" data-scope="all" data-i="scopeAll">Все</button><button type="button" class="pill-btn" data-scope="following" data-i="scopeFollowing">Подписки</button></div>
+      <div class="pills"><button type="button" class="pill-btn active" data-sort="new" data-i="sortNew">Новые</button><button type="button" class="pill-btn" data-sort="top" data-i="sortTop">Популярные</button></div>
+      <label class="feed-search"><span>⌕</span><input id="search" type="search" data-ph="search" autocomplete="off"></label>
+    </div>
+
+    <div id="tagRow" class="tag-row"></div>
+    <div id="feed" class="posts"></div>
+    <div class="more-wrap"><button type="button" id="more" class="btn ghost" style="display:none" data-i="loadMore">Показать ещё</button></div>
+  </section>
+
+  <aside class="feed-right">
+    <div class="side-card"><small data-i="shortcuts">БЫСТРЫЕ ССЫЛКИ</small>
+      <a class="side-link" href="./messages.html"><span>✉</span><span data-i="messages">Сообщения</span></a>
+      <a class="side-link" href="./leaderboard.html"><span>🏆</span><span data-i="navTop">Рейтинг</span></a>
+      <a class="side-link" href="./profile.html"><span>☺</span><span data-i="myProfile">Мой профиль</span></a>
+      <a class="side-link" href="./suggest.html"><span>＋</span><span data-i="suggest">Предложить сервис</span></a>
+      <a class="side-link" href="./index.html#catalog"><span>✦</span><span data-i="catalog">Каталог</span></a>
+    </div>
+    <div class="side-card prem-card-mini"><small data-i="premTitle">💎 Premium</small><p class="muted small" data-i="premText"></p><a class="btn ghost" href="./premium.html" data-i="premBtn">Подробнее</a></div>
+    <div class="side-card"><small data-i="rulesTitle">ПРАВИЛА</small>
+      <ul class="rules"><li data-i="rule1">Делись личным опытом и полезными промптами.</li><li data-i="rule2">Уважай других участников.</li><li data-i="rule3">Без спама и личных данных.</li></ul>
+    </div>
+  </aside>
+</main>
+
+<dialog id="chanDlg" class="dlg">
+  <form id="chanForm" class="dlg-box">
+    <div class="dlg-head"><h3 data-i="chanNew">Новый канал</h3><button type="button" class="mini-btn" id="chanClose" aria-label="Close">✕</button></div>
+    <label class="field"><span data-i="chanName">Название</span><input id="chName" maxlength="30" minlength="3" required autocomplete="off"></label>
+    <label class="field"><span data-i="chanDesc">Описание</span><textarea id="chDesc" rows="3" maxlength="200"></textarea></label>
+    <div class="field"><span data-i="chanIcon">Значок</span><div id="iconPick" class="icon-pick"></div></div>
+    <label class="field"><span data-i="chanMode">Кто может публиковать</span><select id="chMode"></select></label>
+    <div class="dlg-actions"><button type="submit" class="btn primary" id="chSubmit" data-i="chanCreate">Создать канал</button></div>
+    <p class="message" id="chMsg" role="status"></p>
+  </form>
+</dialog>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "name": "syntix-sync",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Free-plan automation: leaderboard/ratings snapshot + Stripe -> premium sync (runs in GitHub Actions)",
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "stripe": "^17.4.0"
+  }
+}
