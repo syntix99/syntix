@@ -2,6 +2,15 @@
 (() => {
   const ru = () => (localStorage.getItem('syntix-lang') || 'ru') === 'ru';
 
+  function loadVisualRefresh() {
+    if (document.querySelector('link[data-syntix-visual-refresh]')) return;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = new URL('./visual-refresh.css', document.currentScript?.src || location.href).href;
+    link.dataset.syntixVisualRefresh = '1';
+    document.head.append(link);
+  }
+
   window.toast = msg => {
     let w = document.querySelector('.toasts');
     if (!w) {
@@ -70,6 +79,7 @@
     if (window.__applyBadge) window.__applyBadge();
   }
 
+  loadVisualRefresh();
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('./sw.js').catch(() => {});
   skipLink();
   tabbar();
